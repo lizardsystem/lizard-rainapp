@@ -12,7 +12,24 @@
   </a>
 </div>
 {# table #}
-todo: table
+<table>
+<thead>
+  <th>Tijdspanne</th>
+  <th>Max</th>
+  <th>Start</th>
+  <th>Eind</th>
+  <th>Herhalingstijd</th>
+</thead>
+<tbody>
+  {% for rain_stat_row in rain_stats %}
+  <td>{{ rain_stat_row.td }}</td>
+  <td>{{ rain_stat_row.max }}</td>
+  <td>{{ rain_stat_row.start }}</td>
+  <td>{{ rain_stat_row.end }}</td>
+  <td>{{ rain_stat_row.t }}</td>
+  {% endfor %}
+</tbody>
+</table>
 {# bar graph #}
 <div style="width: 100%; height: 240px;"
      class="img-use-my-size">
