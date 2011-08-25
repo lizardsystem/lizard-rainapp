@@ -5,6 +5,7 @@ import logging
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.http import Http404
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.adapter import Graph
@@ -28,9 +29,36 @@ class RainAppAdapter(FewsJdbc):
 
         """
         today = datetime.datetime.now()
-        graph = Graph(start_date, end_date,
+        named_locations = self._locations()
+        line_styles = self.line_styles(identifiers)
+        graph = RainGraph(start_date, end_date,
                       width=width, height=height, today=today)
-        graph.add_today()
+
+        is_empty = True
+        # Uses first identifier and breaks the loop
+        # Gets timeseries, draws the bars, sets  the legend
+        for identifier in identifiers:
+            location_id = identifier['location']
+            location_name = [
+                location['location'] for location in named_locations
+                if location['locationid'] == location_id][0]
+            timeseries = self.values(identifier, start_date, end_date)
+            if timeseries:
+                is_empty = False
+            dates = [row['datetime'] for row in timeseries]
+            values = [row['value'] for row in timeseries]
+            units = [row['unit'] for row in timeseries]
+            if len(units) > 0:
+                graph.axes.set_ylabel(units[0])
+            if values:
+                graph.axes.bar(dates, values, lw=1,
+                                color=line_styles[str(identifier)]['color'],
+                                label=location_name)
+            graph.legend()
+            break
+
+        if is_empty:
+            raise Http404
 
         return graph.http_png()
 
@@ -87,7 +115,6 @@ class RainAppAdapter(FewsJdbc):
             'start': check_start,
             'end': check_end,
             't': 'herhalingstijd'}
-
 
     def html(self, snippet_group=None, identifiers=None, layout_options=None):
         """
@@ -156,3 +183,52 @@ class RainAppAdapter(FewsJdbc):
              'symbol_url': symbol_url,
              'img_url': img_url,
              'bar_url': bar_url})
+
+
+class RainGraph(Graph):
+    """
+    Class inheres from Graph class of lizard_map.adapter
+    - overrides the legend method
+    """
+
+    def legend_font_size(self, max_label_len):
+        """
+        Defines the font size depended on graph width and max label length
+        """
+        if max_label_len > 65 * ((self.width - 150) / 314.0):
+            return 'xx-small'
+        if max_label_len > 50 * ((self.width - 150) / 314.0):
+            return 'x-small'
+        if max_label_len > 40 * ((self.width - 150) / 314.0):
+            return 'small'
+        return 'medium'
+
+    def legend(self,
+               handles=None,
+               labels=None,
+               ncol=1,
+               force_legend_below=False):
+        """
+        Displays legend under the graph.
+
+        Handles is list of matplotlib objects (e.g. matplotlib.lines.Line2D)
+        labels is list of strings
+        """
+        if handles is None and labels is None:
+            handles, labels = self.axes.get_legend_handles_labels()
+
+        if handles and labels:
+            max_label_len = max([len(label) for label in labels])
+            font_size = self.legend_font_size(max_label_len)
+            prop = {'size': font_size}
+
+            return self.axes.legend(
+                handles,
+                labels,
+                bbox_to_anchor=(0., -0.15, 1, .102),
+                prop=prop,
+                loc="upper left",
+                ncol=ncol,
+                mode="expand",
+                fancybox=True,
+                shadow=True,)
