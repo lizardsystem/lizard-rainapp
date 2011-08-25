@@ -14,6 +14,7 @@ install_requires = [
     'django-extensions',
     'django-nose',
     'lizard-ui >= 3.0',
+    'lizard-fewsjdbc',
     'pkginfo',
     ],
 
@@ -22,15 +23,15 @@ tests_require = [
 
 setup(name='lizard-rainapp',
       version=version,
-      description="TODO",
+      description="Rainapp",
       long_description=long_description,
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=['Programming Language :: Python',
                    'Framework :: Django',
                    ],
       keywords=[],
-      author='TODO',
-      author_email='TODO@nelen-schuurmans.nl',
+      author='Jack Ha',
+      author_email='jack.ha@nelen-schuurmans.nl',
       url='',
       license='GPL',
       packages=['lizard_rainapp'],
@@ -41,5 +42,9 @@ setup(name='lizard-rainapp',
       extras_require = {'test': tests_require},
       entry_points={
           'console_scripts': [
-          ]},
+            ],
+          'lizard_map.adapter_class': [
+            'adapter_rainapp = lizard_rainapp.layers:RainAppAdapter'
+            ],
+          },
       )
