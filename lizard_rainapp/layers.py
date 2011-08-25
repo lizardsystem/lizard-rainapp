@@ -32,6 +32,9 @@ class RainAppAdapter(FewsJdbc):
 
 
     def rain_stats(self, identifier, td, start_date, end_date):
+        """
+        Calculate stats
+        """
         return {
             'td': td,
             'max': 'max',
@@ -52,6 +55,7 @@ class RainAppAdapter(FewsJdbc):
             [identifier['location'] for identifier in identifiers])
 
         # Make table with these identifiers.
+        # Layer options contain request - not the best way but it works.
         start_date, end_date = current_start_end_dates(
             layout_options['request'])
         rain_stats = []  # Contains dicts with 'max', 'start', 'end', '..'
