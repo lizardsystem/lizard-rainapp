@@ -23,7 +23,7 @@ tests_require = [
 
 setup(name='lizard-rainapp',
       version=version,
-      description="Rainapp",
+      description="RainApp - visualizing rain statistics based on measurements",
       long_description=long_description,
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=['Programming Language :: Python',
