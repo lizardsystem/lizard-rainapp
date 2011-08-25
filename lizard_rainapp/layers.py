@@ -15,7 +15,12 @@ class RainAppAdapter(FewsJdbc):
     """
 
     def bar_image(self, identifiers, start_date, end_date, width, height):
-        """Implement bar_image"""
+        """Implement bar_image.
+
+        gebruik self.values(identifier, start_date, end_date) en/of
+        self.value_aggregate_default(...) -> see lizard_map.workspace
+
+        """
         today = datetime.datetime.now()
         graph = Graph(start_date, end_date,
                       width=width, height=height, today=today)
