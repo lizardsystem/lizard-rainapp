@@ -135,6 +135,7 @@ class RainAppAdapter(FewsJdbc):
                 self.jdbc_source.id, self.filterkey, self.parameterkey,
                 identifier['location'], start_date_cache, end_date_cache))
         # Datetimes are in string and stored in datetime_str.
+        logger.debug('Trying cache...')
         values = cache.get(cache_key)
         if values is None:
             logger.debug('Caching values for %s' % identifier['location'])
@@ -144,7 +145,10 @@ class RainAppAdapter(FewsJdbc):
             for value in values:
                 value['datetime_str'] = value['datetime'].isoformat()
                 del value['datetime']
-            cache.set(cache_key, values, 30)  # For 1 minute
+            cache.set(cache_key, values, 5 * 60)
+            logger.debug('Cache written')
+        else:
+            logger.debug('Got timeseries from cache')
 
         # Convert datetime strings to datetime in values
         for value in values:
@@ -167,14 +171,20 @@ class RainAppAdapter(FewsJdbc):
         Values is a list of dicts 'values', 'datetime'.
         """
         return_values = []
-        for value in values:
+        min_index = 0
+        max_index = 0
+        for i, value in enumerate(values):
             if (value['datetime'] >= start_date and
                 value['datetime'] < end_date):
 
                 return_values.append(value)
-        return return_values
+                if min_index is None or i < min_index:
+                    min_index = i
+                if max_index is None or i > max_index:
+                    max_index = i
+        return return_values, min_index, max_index
 
-    def rain_stats(self, identifier, td, start_date, end_date):
+    def rain_stats(self, values, td, start_date, end_date):
         """
         Calculate stats.
 
@@ -183,7 +193,8 @@ class RainAppAdapter(FewsJdbc):
         TODO: add herhalingstijd. needs: bui_duur [uren], oppervlakte
         [vierkante km] neerslag_som [mm]
         """
-        values = self._cached_values(identifier, start_date, end_date)
+        logger.debug('Calculating rain stats for start=%s, end=%s, td=%s' %
+                     (start_date, end_date, td))
         if not values:
             return {
                 'td': td,
@@ -210,15 +221,52 @@ class RainAppAdapter(FewsJdbc):
         end = end_date - td + datetime.timedelta(seconds=2)
         period_counter = start_date
         one_hour = datetime.timedelta(seconds=3600)
-        while period_counter < end:
-            values_period = self.values_subset(
-                values, period_counter, period_counter + td)
-            sum_values = sum([
-                    value_period['value']
-                    for value_period in values_period])
 
-            max_values.append({
-                    'value': sum_values, 'datetime': period_counter})
+        # Generate sum_values. Works, but it is slow.
+        # while period_counter < end:
+        #     values_period = self.values_subset(
+        #         values, period_counter, period_counter + td)
+        #     sum_values = sum([
+        #             value_period['value']
+        #             for value_period in values_period])
+        #     max_values.append({
+        #             'value': sum_values, 'datetime': period_counter})
+        #     period_counter += one_hour
+
+        # Fast way to calculate sum values.
+        calc_first = True
+        len_values = len(values)
+        while period_counter < end:
+            period_start = period_counter
+            period_end = period_counter + td
+            if calc_first:
+                # Calculate value for first timestep
+                values_period, min_index, max_index = self.values_subset(
+                    values, period_start, period_end)
+                sum_values = sum([
+                        value_period['value']
+                        for value_period in values_period])
+                max_values.append({
+                        'value': sum_values, 'datetime': period_counter})
+                calc_first = False
+            else:
+                # Calculate next value by subtracting first value(s) and adding
+                # last (new) value(s).
+                while (min_index < max_index and
+                       values[min_index]['datetime'] < period_start):
+
+                    sum_values -= values[min_index]['value']
+                    min_index += 1
+
+                while (max_index+1 < len_values and
+                       values[max_index+1]['datetime'] < period_end):
+
+                    sum_values += values[max_index+1]['value']
+                    max_index += 1
+
+                max_values.append({
+                        'value': sum_values, 'datetime': period_counter})
+
             period_counter += one_hour
 
         if max_values:
@@ -261,9 +309,10 @@ class RainAppAdapter(FewsJdbc):
             datetime.timedelta(hours=1)
             ]
         for identifier in identifiers:
+            values = self._cached_values(identifier, start_date, end_date)
             for td in td_range:
                 rain_stats.append(self.rain_stats(
-                        identifier, td,
+                        values, td,
                         start_date, end_date))
 
         # Collect urls for graphs.
