@@ -16,6 +16,7 @@ install_requires = [
     'lizard-map',
     'lizard-ui >= 3.0',
     'lizard-fewsjdbc',
+    'nens-graph',
     'pkginfo',
     ],
 
