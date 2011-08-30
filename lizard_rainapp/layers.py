@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import iso8601
 
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
@@ -109,38 +110,56 @@ class RainAppAdapter(FewsJdbc):
 
         return graph.http_png()
 
-    # def _cached_values(self, identifier, start_date, end_date):
-    #     """
-    #     Same as self.values, but cached.
+    def _tzaware(self, dt, tzinfo):
+        """Make datetime timezone aware"""
+        return datetime.datetime(
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second,
+            tzinfo=tzinfo)
 
-    #     The stored values are rounded in days, a 'little bit
-    #     more'. Else the cache will always miss.
-    #     """
-    #     start_date_cache = datetime.datetime(
-    #         start_date.year, start_date.month, start_date.day)
-    #     end_date_cache = (
-    #         datetime.datetime(
-    #             end_date.year, end_date.month, end_date.day
-    #             ) + datetime.timedelta(days=1))
-    #     cache_key = hash('%s::%s::%s::%s::%s::%s' % (
-    #             self.jdbc_source.id, self.filterkey, self.parameterkey,
-    #             identifier['location'], start_date_cache, end_date_cache))
-    #     values = cache.get(cache_key)
-    #     if values is None:
-    #         logger.debug('Caching values for %s' % identifier['location'])
-    #         values = self.values(identifier, start_date, end_date)
-    #         cache.set(cache_key, values)
+    def _cached_values(self, identifier, start_date, end_date):
+        """
+        Same as self.values, but cached.
 
-    #     print start_date
-    #     print values[0]['datetime']
-    #     # Remove datetimes out of range.
-    #     # Problem: tz aware and tz naive datetimes cannot be compared
-    #     while values and values[0]['datetime'] < start_date:
-    #         del values[0]
-    #     while values and values[-1]['datetime'] > end_date:
-    #         del values[-1]
+        The stored values are rounded in days, a 'little bit
+        more'. Else the cache will always miss.
+        """
+        start_date_cache = datetime.datetime(
+            start_date.year, start_date.month, start_date.day)
+        end_date_cache = (
+            datetime.datetime(
+                end_date.year, end_date.month, end_date.day
+                ) + datetime.timedelta(days=1))
 
-    #     return values
+        cache_key = hash('%s::%s::%s::%s::%s::%s' % (
+                self.jdbc_source.id, self.filterkey, self.parameterkey,
+                identifier['location'], start_date_cache, end_date_cache))
+        # Datetimes are in string and stored in datetime_str.
+        values = cache.get(cache_key)
+        if values is None:
+            logger.debug('Caching values for %s' % identifier['location'])
+            values = self.values(identifier, start_date, end_date)
+            # Convert datetimes to strings, the
+            # iso8601.iso8601.FixedOffset will not de-pickle.
+            for value in values:
+                value['datetime_str'] = value['datetime'].isoformat()
+                del value['datetime']
+            cache.set(cache_key, values, 30)  # For 1 minute
+
+        # Convert datetime strings to datetime in values
+        for value in values:
+            value['datetime'] = iso8601.parse_date(value['datetime_str'])
+            del value['datetime_str']
+
+        start_date = self._tzaware(start_date, values[0]['datetime'].tzinfo)
+        end_date = self._tzaware(end_date, values[0]['datetime'].tzinfo)
+        # Remove datetimes out of range.
+        while values and values[0]['datetime'] < start_date:
+            del values[0]
+        while values and values[-1]['datetime'] > end_date:
+            del values[-1]
+
+        return values
 
     def values_subset(self, values, start_date, end_date):
         """Return subset of 'values'. Inefficient, but it works
@@ -155,15 +174,6 @@ class RainAppAdapter(FewsJdbc):
                 return_values.append(value)
         return return_values
 
-
-    def _tzaware(self, dt, tzinfo):
-        """Make datetime timezone aware"""
-        return datetime.datetime(
-            dt.year, dt.month, dt.day,
-            dt.hour, dt.minute, dt.second,
-            tzinfo=tzinfo)
-
-
     def rain_stats(self, identifier, td, start_date, end_date):
         """
         Calculate stats.
@@ -173,7 +183,7 @@ class RainAppAdapter(FewsJdbc):
         TODO: add herhalingstijd. needs: bui_duur [uren], oppervlakte
         [vierkante km] neerslag_som [mm]
         """
-        values = self.values(identifier, start_date, end_date)
+        values = self._cached_values(identifier, start_date, end_date)
         if not values:
             return {
                 'td': td,
@@ -215,7 +225,6 @@ class RainAppAdapter(FewsJdbc):
             max_value = max(max_values, key=lambda i: i['value'])
             max_value['datetime_end'] = max_value['datetime'] + td
             hours = td.days * 24 + td.seconds / 3600.0
-            print hours
             t = herhalingstijd(hours, 25, max_value['value'])
         else:
             max_value = {'value': '-', 'datetime': '-', 'datetime_end': '-'}
