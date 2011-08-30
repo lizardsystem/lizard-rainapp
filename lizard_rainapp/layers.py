@@ -75,6 +75,21 @@ class RainAppAdapter(FewsJdbc):
     identifier: {'location': <locationid>}
     """
 
+    def get_bar_width(self, values, unit, graph):
+        """
+        Calculates the width of the bar.
+        """
+        if unit == 'mm/24hr':
+            return graph.width / len(values) / 500
+        elif unit == 'mm/3hr':
+            return graph.width / len(values) / 700
+        elif unit == 'mm/hr':
+            return graph.width / len(values) / 800
+        elif unit == 'mm/5min':
+            return graph.width / len(values) / 1000
+        else:
+            return 0.8
+
     def bar_image(self, identifiers, start_date, end_date, width, height):
         """Implement bar_image.
 
@@ -84,11 +99,8 @@ class RainAppAdapter(FewsJdbc):
         """
         today = datetime.datetime.now()
         named_locations = self._locations()
-        line_styles = self.line_styles(identifiers)
         graph = RainGraph(start_date, end_date,
                       width=width, height=height, today=today)
-
-        is_empty = True
         # Uses first identifier and breaks the loop
         # Gets timeseries, draws the bars, sets  the legend
         for identifier in identifiers:
@@ -97,17 +109,18 @@ class RainAppAdapter(FewsJdbc):
                 location['location'] for location in named_locations
                 if location['locationid'] == location_id][0]
             timeseries = self.values(identifier, start_date, end_date)
-            if timeseries:
-                is_empty = False
             dates = [row['datetime'] for row in timeseries]
             values = [row['value'] for row in timeseries]
             units = [row['unit'] for row in timeseries]
+            unit = ''
             if len(units) > 0:
-                graph.axes.set_ylabel(units[0])
+                unit = units[0]
             if values:
                 graph.axes.bar(dates, values, lw=1,
-                                color=line_styles[str(identifier)]['color'],
-                                label=location_name)
+                               edgecolor='blue',
+                               width=self.get_bar_width(values, unit, graph),
+                               label=location_name)
+            graph.axes.set_ylabel(unit)
             graph.legend()
             break
 
@@ -225,7 +238,6 @@ class RainAppAdapter(FewsJdbc):
                 if location['locationid'] == location_id][0]
             if not unit:
                 unit = cached_value_result[0]['unit']
-
 
             if values:
                 is_empty = False
@@ -435,10 +447,10 @@ class RainAppAdapter(FewsJdbc):
                     sum_values -= values[min_index]['value']
                     min_index += 1
 
-                while (max_index+1 < len_values and
-                       values[max_index+1]['datetime'] < period_end):
+                while (max_index + 1 < len_values and
+                       values[max_index + 1]['datetime'] < period_end):
 
-                    sum_values += values[max_index+1]['value']
+                    sum_values += values[max_index + 1]['value']
                     max_index += 1
 
                 max_values.append({
