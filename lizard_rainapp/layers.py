@@ -10,8 +10,58 @@ from django.http import Http404
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.adapter import Graph
 from lizard_map.daterange import current_start_end_dates
+from lizard_rainapp.calculations import herhalingstijd
 
 logger = logging.getLogger(__name__)
+
+
+class RainGraph(Graph):
+    """
+    Class inheres from Graph class of lizard_map.adapter
+    - overrides the legend method
+    """
+
+    def legend_font_size(self, max_label_len):
+        """
+        Defines the font size depended on graph width and max label length
+        """
+        if max_label_len > 65 * ((self.width - 150) / 314.0):
+            return 'xx-small'
+        if max_label_len > 50 * ((self.width - 150) / 314.0):
+            return 'x-small'
+        if max_label_len > 40 * ((self.width - 150) / 314.0):
+            return 'small'
+        return 'medium'
+
+    def legend(self,
+               handles=None,
+               labels=None,
+               ncol=1,
+               force_legend_below=False):
+        """
+        Displays legend under the graph.
+
+        Handles is list of matplotlib objects (e.g. matplotlib.lines.Line2D)
+        labels is list of strings
+        """
+        if handles is None and labels is None:
+            handles, labels = self.axes.get_legend_handles_labels()
+
+        if handles and labels:
+            max_label_len = max([len(label) for label in labels])
+            font_size = self.legend_font_size(max_label_len)
+            prop = {'size': font_size}
+
+            return self.axes.legend(
+                handles,
+                labels,
+                bbox_to_anchor=(0., -0.15, 1, .102),
+                prop=prop,
+                loc="upper left",
+                ncol=ncol,
+                mode="expand",
+                fancybox=True,
+                shadow=True,)
 
 
 class RainAppAdapter(FewsJdbc):
@@ -57,9 +107,6 @@ class RainAppAdapter(FewsJdbc):
             graph.legend()
             break
 
-        if is_empty:
-            raise Http404
-
         return graph.http_png()
 
     # def _cached_values(self, identifier, start_date, end_date):
@@ -95,26 +142,91 @@ class RainAppAdapter(FewsJdbc):
 
     #     return values
 
+    def values_subset(self, values, start_date, end_date):
+        """Return subset of 'values'. Inefficient, but it works
+
+        Values is a list of dicts 'values', 'datetime'.
+        """
+        return_values = []
+        for value in values:
+            if (value['datetime'] >= start_date and
+                value['datetime'] < end_date):
+
+                return_values.append(value)
+        return return_values
+
+
+    def _tzaware(self, dt, tzinfo):
+        """Make datetime timezone aware"""
+        return datetime.datetime(
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second,
+            tzinfo=tzinfo)
+
+
     def rain_stats(self, identifier, td, start_date, end_date):
         """
         Calculate stats.
 
         TODO: make faster by caching the data.
+
+        TODO: add herhalingstijd. needs: bui_duur [uren], oppervlakte
+        [vierkante km] neerslag_som [mm]
         """
-        check_start = start_date - td
-        check_end = start_date
-        values = self.values(identifier, check_start, check_end)
-        if values:
-            max_value = max(values, key=lambda i: i['value'])
+        values = self.values(identifier, start_date, end_date)
+        if not values:
+            return {
+                'td': td,
+                'max': '-',
+                'datetime': '-',
+                'start': '-',
+                'end': '-',
+                't': '-'}
+
+        # Make start_date and end_date tz aware
+        start_date = self._tzaware(
+            start_date,
+            tzinfo=values[0]['datetime'].tzinfo)
+        end_date = self._tzaware(
+            end_date,
+            tzinfo=values[0]['datetime'].tzinfo)
+
+        max_values = []
+
+        # Loop values and calc max for each period. Slow, but it works.
+
+        # End_date often ends with 23:59:59, we want to include at
+        # least 1 day in case td=1 day, thus the 2 seconds.
+        end = end_date - td + datetime.timedelta(seconds=2)
+        period_counter = start_date
+        one_hour = datetime.timedelta(seconds=3600)
+        while period_counter < end:
+            values_period = self.values_subset(
+                values, period_counter, period_counter + td)
+            sum_values = sum([
+                    value_period['value']
+                    for value_period in values_period])
+
+            max_values.append({
+                    'value': sum_values, 'datetime': period_counter})
+            period_counter += one_hour
+
+        if max_values:
+            max_value = max(max_values, key=lambda i: i['value'])
+            max_value['datetime_end'] = max_value['datetime'] + td
+            hours = td.days * 24 + td.seconds / 3600.0
+            print hours
+            t = herhalingstijd(hours, 25, max_value['value'])
         else:
-            max_value = {'value': 'geen waardes', 'datetime': '-'}
+            max_value = {'value': '-', 'datetime': '-', 'datetime_end': '-'}
+            t = '-'
+
         return {
             'td': td,
             'max': max_value['value'],
-            'datetime': max_value['datetime'],
-            'start': check_start,
-            'end': check_end,
-            't': 'herhalingstijd'}
+            'start': max_value['datetime'],
+            'end': max_value['datetime_end'],
+            't': t}
 
     def html(self, snippet_group=None, identifiers=None, layout_options=None):
         """
@@ -183,52 +295,3 @@ class RainAppAdapter(FewsJdbc):
              'symbol_url': symbol_url,
              'img_url': img_url,
              'bar_url': bar_url})
-
-
-class RainGraph(Graph):
-    """
-    Class inheres from Graph class of lizard_map.adapter
-    - overrides the legend method
-    """
-
-    def legend_font_size(self, max_label_len):
-        """
-        Defines the font size depended on graph width and max label length
-        """
-        if max_label_len > 65 * ((self.width - 150) / 314.0):
-            return 'xx-small'
-        if max_label_len > 50 * ((self.width - 150) / 314.0):
-            return 'x-small'
-        if max_label_len > 40 * ((self.width - 150) / 314.0):
-            return 'small'
-        return 'medium'
-
-    def legend(self,
-               handles=None,
-               labels=None,
-               ncol=1,
-               force_legend_below=False):
-        """
-        Displays legend under the graph.
-
-        Handles is list of matplotlib objects (e.g. matplotlib.lines.Line2D)
-        labels is list of strings
-        """
-        if handles is None and labels is None:
-            handles, labels = self.axes.get_legend_handles_labels()
-
-        if handles and labels:
-            max_label_len = max([len(label) for label in labels])
-            font_size = self.legend_font_size(max_label_len)
-            prop = {'size': font_size}
-
-            return self.axes.legend(
-                handles,
-                labels,
-                bbox_to_anchor=(0., -0.15, 1, .102),
-                prop=prop,
-                loc="upper left",
-                ncol=ncol,
-                mode="expand",
-                fancybox=True,
-                shadow=True,)
