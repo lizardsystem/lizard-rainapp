@@ -1,4 +1,5 @@
 {% load workspaces %}
+{% load utility %}
 {# header #}
 <div>
   <img src="{{ symbol_url }}" />&nbsp;
@@ -45,11 +46,11 @@
 <tbody>
   {% for rain_stat_row in rain_stats_table %}
   <tr>
-  <td>{{ rain_stat_row.td }}</td>
-  <td>{{ rain_stat_row.max }}</td>
-  <td>{{ rain_stat_row.start }}</td>
-  <td>{{ rain_stat_row.end }}</td>
-  <td>{{ rain_stat_row.t }}</td>
+  <td>{{ rain_stat_row.td|short_timedelta }}</td>
+  <td>{{ rain_stat_row.max|floatformat:0 }}</td>
+  <td>{{ rain_stat_row.start|date:"d-m-Y H:i:s" }}</td>
+  <td>{{ rain_stat_row.end|date:"d-m-Y H:i:s" }}</td>
+  <td>{{ rain_stat_row.t|floatformat:0 }}</td>
   </tr>
   {% endfor %}
 </tbody>
