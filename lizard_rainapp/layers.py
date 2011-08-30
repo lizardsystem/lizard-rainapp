@@ -354,6 +354,48 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
+    def _max_values(self, values, td, start_date, end_date):
+        """
+        """
+        max_values = []
+
+        # Loop values and calc max for each period. Slow, but it works.
+
+        # End_date often ends with 23:59:59, we want to include at
+        # least 1 day in case td=1 day, thus the 2 seconds.
+        end = end_date - td + datetime.timedelta(seconds=2)
+        period_counter = start_date
+        one_hour = datetime.timedelta(seconds=3600)
+
+        # Fast way to calculate sum values.
+        len_values = len(values)
+        min_index, max_index = 0, 0
+        sum_values = 0
+        while period_counter < end:
+            period_start = period_counter
+            period_end = period_counter + td
+
+            # Calculate value by subtracting value(s) from front and
+            # adding new value(s) from end.
+            while (max_index + 1 < len_values and
+                   values[max_index+1]['datetime'] < period_end):
+
+                sum_values += values[max_index + 1]['value']
+                max_index += 1
+
+            while (min_index < max_index and
+                   values[min_index]['datetime'] < period_start):
+
+                sum_values -= values[min_index]['value']
+                min_index += 1
+
+            max_values.append({
+                    'value': sum_values, 'datetime': period_counter})
+
+            period_counter += one_hour
+
+        return max_values
+
     def rain_stats(self, values, td, start_date, end_date):
         """
         Calculate stats.
@@ -382,43 +424,7 @@ class RainAppAdapter(FewsJdbc):
             end_date,
             tzinfo=values[0]['datetime'].tzinfo)
 
-        max_values = []
-
-        # Loop values and calc max for each period. Slow, but it works.
-
-        # End_date often ends with 23:59:59, we want to include at
-        # least 1 day in case td=1 day, thus the 2 seconds.
-        end = end_date - td + datetime.timedelta(seconds=2)
-        period_counter = start_date
-        one_hour = datetime.timedelta(seconds=3600)
-
-        # Fast way to calculate sum values.
-        calc_first = False
-        len_values = len(values)
-        min_index, max_index = 0, 0
-        sum_values = 0
-        while period_counter < end:
-            period_start = period_counter
-            period_end = period_counter + td
-
-            # Calculate value by subtracting value(s) from front and
-            # adding new value(s) from end.
-            while (max_index + 1 < len_values and
-                   values[max_index+1]['datetime'] < period_end):
-
-                sum_values += values[max_index + 1]['value']
-                max_index += 1
-
-            while (min_index < max_index and
-                   values[min_index]['datetime'] < period_start):
-
-                sum_values -= values[min_index]['value']
-                min_index += 1
-
-            max_values.append({
-                    'value': sum_values, 'datetime': period_counter})
-
-            period_counter += one_hour
+        max_values = self._max_values(values, td, start_date, end_date)
 
         if max_values:
             max_value = max(max_values, key=lambda i: i['value'])
