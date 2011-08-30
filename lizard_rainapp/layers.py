@@ -68,7 +68,7 @@ class RainAppAdapter(FewsJdbc):
                                                       end_date)
             dates = [row['datetime'] for row in cached_value_result]
             values = [row['value'] for row in cached_value_result]
-            units= [row['unit'] for row in cached_value_result]
+            units = [row['unit'] for row in cached_value_result]
             unit = ''
             if len(units) > 0:
                 unit = units[0]
@@ -84,7 +84,7 @@ class RainAppAdapter(FewsJdbc):
 
         graph.responseobject = HttpResponse(content_type='image/png')
         return graph.png_response()
-        
+
     def image(self, identifiers, start_date, end_date, width, height,
     layout_extra=None):
         """Return imagedata.Implement bar_image."""
@@ -99,7 +99,7 @@ class RainAppAdapter(FewsJdbc):
                                                       end_date)
             dates = [row['datetime'] for row in cached_value_result]
             values = [row['value'] for row in cached_value_result]
-            units= [row['unit'] for row in cached_value_result]
+            units = [row['unit'] for row in cached_value_result]
             unit = ''
             if len(units) > 0:
                 unit = units[0]
@@ -131,8 +131,8 @@ class RainAppAdapter(FewsJdbc):
             start_date.year, start_date.month, start_date.day)
         end_date_cache = (
             datetime.datetime(
-                end_date.year, end_date.month, end_date.day
-                ) + datetime.timedelta(days=1))
+                end_date.year, end_date.month, end_date.day) +
+                datetime.timedelta(days=1))
 
         cache_key = hash('%s::%s::%s::%s::%s::%s' % (
                 self.jdbc_source.id, self.filterkey, self.parameterkey,
@@ -280,8 +280,7 @@ class RainAppAdapter(FewsJdbc):
             datetime.timedelta(days=2),
             datetime.timedelta(days=1),
             datetime.timedelta(hours=3),
-            datetime.timedelta(hours=1)
-            ]
+            datetime.timedelta(hours=1)]
         for identifier in identifiers:
             values = self._cached_values(identifier, start_date, end_date)
             rain_stats[identifier['location']] = []

@@ -1,5 +1,4 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
-import datetime
 import json
 
 from django.shortcuts import get_object_or_404
