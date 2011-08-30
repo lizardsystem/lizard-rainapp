@@ -56,4 +56,4 @@ def workspace_item_rainapp_bars(request, workspace_item_id):
 
     return workspace_item.adapter.bar_image(
         identifier_list, start_date, end_date,
-        width, height)
+        width, height, layout_extra={})
