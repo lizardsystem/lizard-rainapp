@@ -28,18 +28,6 @@
     <th>Start</th>
     <th>Eind</th>
     <th>Herhalingstijd
-    {% if add_snippet %}
-    <div class="button">
-      <a href=""
-         class="add-snippet ss_chart_line_add ss_sprite"
-         data-workspace-id="{{ snippet.workspace_item.workspace.id }}"
-         data-workspace-item-id="{{ snippet.workspace_item.id }}"
-         data-item-identifier='{{ snippet.identifier|json_escaped }}'
-         data-item-shortname="{{ snippet.shortname }}"
-         data-item-name="{{ snippet.name }}"
-         title="Voeg toe aan collage">&nbsp;</a>
-    </div>
-    {% endif %}
     </th>
   </tr>
 </thead>
@@ -48,9 +36,9 @@
   <tr>
   <td>{{ rain_stat_row.td|short_timedelta }}</td>
   <td>{{ rain_stat_row.max|floatformat:0 }}</td>
-  <td>{{ rain_stat_row.start|date:"d-m-Y H:i:s" }}</td>
-  <td>{{ rain_stat_row.end|date:"d-m-Y H:i:s" }}</td>
-  <td>{{ rain_stat_row.t|floatformat:0 }}</td>
+  <td>{{ rain_stat_row.start|date:"d-m-Y H:i" }}</td>
+  <td>{{ rain_stat_row.end|date:"d-m-Y H:i" }}</td>
+  <td>T = {{ rain_stat_row.t|floatformat:0 }}</td>
   </tr>
   {% endfor %}
 </tbody>
@@ -64,3 +52,21 @@
     afbeelding nog niet geladen
   </a>
 </div>
+{% if add_snippet %}
+<table>
+  <tr>
+    {% for identifier in identifiers %}
+    <td class="button">
+      <a href=""
+         class="add-snippet ss_chart_line_add ss_sprite"
+         data-workspace-id="{{ workspace_item.workspace.id }}"
+         data-workspace-item-id="{{ workspace_item.id }}"
+         data-item-identifier='{{ identifier|json_escaped }}'
+         data-item-shortname="{{ identifier.location }}"
+         data-item-name="{{ identifier.location }}"
+         title="Voeg toe aan collage">&nbsp;</a>
+    </td>
+    {% endfor %}
+  </tr>
+</table>
+{% endif %}

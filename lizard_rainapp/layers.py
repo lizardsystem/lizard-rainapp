@@ -260,6 +260,7 @@ class RainAppAdapter(FewsJdbc):
         """
         Popup with graph - table - bargraph.
         """
+        add_snippet = layout_options.get('add_snippet', False)
         if snippet_group:
             identifiers = [
                 snippet.identifier
@@ -327,4 +328,7 @@ class RainAppAdapter(FewsJdbc):
              'number_of_locations': len(rain_stats.keys()),
              'symbol_url': symbol_url,
              'img_url': img_url,
-             'bar_url': bar_url})
+             'bar_url': bar_url,
+             'add_snippet': add_snippet,
+             'identifiers': identifiers,
+             'workspace_item': self.workspace_item})

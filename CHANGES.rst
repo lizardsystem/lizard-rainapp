@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.1 (unreleased)
+0.1 (2011-08-30)
 ----------------
 
 - Added 'home screen' template. It points to jdbc sources as rainapp urls.
