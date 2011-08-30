@@ -5,6 +5,8 @@ Changelog of lizard-rainapp
 0.1 (unreleased)
 ----------------
 
+- Added 'home screen' template. It points to jdbc sources as rainapp urls.
+
 - Created and switched to specialized graph in nens-graph library that has
   with better legend positioning.
 

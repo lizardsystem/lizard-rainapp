@@ -108,7 +108,7 @@ class RainAppAdapter(FewsJdbc):
             location_name = [
                 location['location'] for location in named_locations
                 if location['locationid'] == location_id][0]
-            timeseries = self.values(identifier, start_date, end_date)
+            timeseries = self._cached_values(identifier, start_date, end_date)
             dates = [row['datetime'] for row in timeseries]
             values = [row['value'] for row in timeseries]
             units = [row['unit'] for row in timeseries]
@@ -122,7 +122,7 @@ class RainAppAdapter(FewsJdbc):
                                label=location_name)
             graph.axes.set_ylabel(unit)
             graph.legend()
-            break
+            break  # Only render the first item
 
         return graph.http_png()
 
@@ -198,8 +198,8 @@ class RainAppAdapter(FewsJdbc):
         line_styles = self.line_styles(identifiers)
         named_locations = self._locations()
         today = datetime.datetime.now()
-        graph = Graph(start_date, end_date,
-                      width=width, height=height, today=today)
+        # graph = Graph(start_date, end_date,
+        #               width=width, height=height, today=today)
         graph = RainappGraph(start_date, end_date,
                       width=width, height=height, today=today)
         graph.axes.grid(True)
@@ -354,25 +354,6 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def values_subset(self, values, start_date, end_date):
-        """Return subset of 'values'. Inefficient, but it works
-
-        Values is a list of dicts 'values', 'datetime'.
-        """
-        return_values = []
-        min_index = 0
-        max_index = 0
-        for i, value in enumerate(values):
-            if (value['datetime'] >= start_date and
-                value['datetime'] < end_date):
-
-                return_values.append(value)
-                if min_index is None or i < min_index:
-                    min_index = i
-                if max_index is None or i > max_index:
-                    max_index = i
-        return return_values, min_index, max_index
-
     def rain_stats(self, values, td, start_date, end_date):
         """
         Calculate stats.
@@ -411,50 +392,31 @@ class RainAppAdapter(FewsJdbc):
         period_counter = start_date
         one_hour = datetime.timedelta(seconds=3600)
 
-        # Generate sum_values. Works, but it is slow.
-        # while period_counter < end:
-        #     values_period = self.values_subset(
-        #         values, period_counter, period_counter + td)
-        #     sum_values = sum([
-        #             value_period['value']
-        #             for value_period in values_period])
-        #     max_values.append({
-        #             'value': sum_values, 'datetime': period_counter})
-        #     period_counter += one_hour
-
         # Fast way to calculate sum values.
-        calc_first = True
+        calc_first = False
         len_values = len(values)
+        min_index, max_index = 0, 0
+        sum_values = 0
         while period_counter < end:
             period_start = period_counter
             period_end = period_counter + td
-            if calc_first:
-                # Calculate value for first timestep
-                values_period, min_index, max_index = self.values_subset(
-                    values, period_start, period_end)
-                sum_values = sum([
-                        value_period['value']
-                        for value_period in values_period])
-                max_values.append({
-                        'value': sum_values, 'datetime': period_counter})
-                calc_first = False
-            else:
-                # Calculate next value by subtracting first value(s) and adding
-                # last (new) value(s).
-                while (min_index < max_index and
-                       values[min_index]['datetime'] < period_start):
 
-                    sum_values -= values[min_index]['value']
-                    min_index += 1
+            # Calculate value by subtracting value(s) from front and
+            # adding new value(s) from end.
+            while (max_index + 1 < len_values and
+                   values[max_index+1]['datetime'] < period_end):
 
-                while (max_index + 1 < len_values and
-                       values[max_index + 1]['datetime'] < period_end):
+                sum_values += values[max_index + 1]['value']
+                max_index += 1
 
-                    sum_values += values[max_index + 1]['value']
-                    max_index += 1
+            while (min_index < max_index and
+                   values[min_index]['datetime'] < period_start):
 
-                max_values.append({
-                        'value': sum_values, 'datetime': period_counter})
+                sum_values -= values[min_index]['value']
+                min_index += 1
+
+            max_values.append({
+                    'value': sum_values, 'datetime': period_counter})
 
             period_counter += one_hour
 
@@ -489,7 +451,10 @@ class RainAppAdapter(FewsJdbc):
         # Layer options contain request - not the best way but it works.
         start_date, end_date = current_start_end_dates(
             layout_options['request'])
-        rain_stats = []  # Contains dicts with 'max', 'start', 'end', '..'
+
+        # Contains list of tables. A table is a list of rows/dicts
+        # with 'max', 'start', 'end', '..'
+        rain_stats = {}
 
         td_range = [
             datetime.timedelta(days=2),
@@ -499,8 +464,9 @@ class RainAppAdapter(FewsJdbc):
             ]
         for identifier in identifiers:
             values = self._cached_values(identifier, start_date, end_date)
+            rain_stats[identifier['location']] = []
             for td in td_range:
-                rain_stats.append(self.rain_stats(
+                rain_stats[identifier['location']].append(self.rain_stats(
                         values, td,
                         start_date, end_date))
 
@@ -539,6 +505,7 @@ class RainAppAdapter(FewsJdbc):
             'lizard_rainapp/popup_rainapp.html',
             {'title': title,
              'rain_stats': rain_stats,
+             'number_of_locations': len(rain_stats.keys()),
              'symbol_url': symbol_url,
              'img_url': img_url,
              'bar_url': bar_url})
