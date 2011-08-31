@@ -5,21 +5,21 @@
   <img src="{{ symbol_url }}" />&nbsp;
   <strong>{{ title|truncatewords:8 }}</strong>
 </div>
-{# normal graph #}
+{# bar graph #}
 <div style="width: 100%; height: 240px;"
      class="img-use-my-size">
-  <a href="{{ img_url }}"
+  <a href="{{ bar_url }}"
      class="replace-with-image">
     afbeelding nog niet geladen
   </a>
 </div>
 {# table #}
-{% for rain_stats_location, rain_stats_table in rain_stats.items %}
+{% for rain_stats_location, rain_stats_data in rain_stats.items %}
 <table>
 <thead>
   {% if number_of_locations > 1 %}
   <tr>
-    <th>{{ rain_stats_location }}</th>
+    <th>{{ rain_stats_data.location_name }}</th>
   </tr>
   {% endif %}
   <tr>
@@ -32,10 +32,10 @@
   </tr>
 </thead>
 <tbody>
-  {% for rain_stat_row in rain_stats_table %}
+  {% for rain_stat_row in rain_stats_data.rain_stats_table %}
   <tr>
   <td>{{ rain_stat_row.td|short_timedelta }}</td>
-  <td>{{ rain_stat_row.max|floatformat:0 }}</td>
+  <td>{{ rain_stat_row.max|floatformat:1 }}</td>
   <td>{{ rain_stat_row.start|date:"d-m-Y H:i" }}</td>
   <td>{{ rain_stat_row.end|date:"d-m-Y H:i" }}</td>
   <td>T = {{ rain_stat_row.t|floatformat:0 }}</td>
@@ -44,14 +44,6 @@
 </tbody>
 </table>
 {% endfor %}
-{# bar graph #}
-<div style="width: 100%; height: 240px;"
-     class="img-use-my-size">
-  <a href="{{ bar_url }}"
-     class="replace-with-image">
-    afbeelding nog niet geladen
-  </a>
-</div>
 {% if add_snippet %}
 <table>
   <tr>

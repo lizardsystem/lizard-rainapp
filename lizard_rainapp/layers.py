@@ -1,3 +1,4 @@
+from __future__ import division
 import datetime
 import json
 import logging
@@ -16,6 +17,13 @@ from nens_graph.rainapp import RainappGraph
 
 logger = logging.getLogger(__name__)
 
+UNIT_TO_TIMEDELTA = {
+    'mm/24hr': datetime.timedelta(hours=24),
+    'mm/3hr': datetime.timedelta(hours=3),
+    'mm/hr': datetime.timedelta(hours=1),
+    'mm/5min': datetime.timedelta(minutes=5),
+}
+
 
 class RainAppAdapter(FewsJdbc):
     """
@@ -23,6 +31,20 @@ class RainAppAdapter(FewsJdbc):
 
     identifier: {'location': <locationid>}
     """
+
+    def _tzaware(self, dt, tzinfo):
+        """Make datetime timezone aware"""
+        return datetime.datetime(
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second,
+            tzinfo=tzinfo)
+
+    def _tzunaware(self, dt):
+        """Make datetime timezone unaware"""
+        return datetime.datetime(
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second,
+            tzinfo=None)
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
@@ -34,29 +56,14 @@ class RainAppAdapter(FewsJdbc):
 
         return location_name
 
-    def _get_bar_width(self, values, unit, graph):
-        """
-        Calculates the width of the bar.
-        """
-        if unit == 'mm/24hr':
-            return graph.width / len(values) / 500
-        elif unit == 'mm/3hr':
-            return graph.width / len(values) / 700
-        elif unit == 'mm/hr':
-            return graph.width / len(values) / 800
-        elif unit == 'mm/5min':
-            return graph.width / len(values) / 1000
-        else:
-            return 0.8
-
-    def bar_image(self, identifiers, start_date, end_date, width, height,
-    layout_extra=None):
-        """Implement bar_image.
-
-        gebruik self.values(identifier, start_date, end_date) en/of
-        self.value_aggregate_default(...) -> see lizard_map.workspace
-
-        """
+    def bar_image(self,
+                  identifiers,
+                  start_date,
+                  end_date,
+                  width,
+                  height,
+                  layout_extra=None):
+        """Return png image data for barchart."""
         today = datetime.datetime.now()
         graph = RainappGraph(start_date, end_date,
                       width=width, height=height, today=today)
@@ -66,59 +73,38 @@ class RainAppAdapter(FewsJdbc):
             cached_value_result = self._cached_values(identifier,
                                                       start_date,
                                                       end_date)
-            dates = [row['datetime'] for row in cached_value_result]
+            dates_notz = [self._tzunaware(row['datetime'])
+                for row in cached_value_result]
+            
             values = [row['value'] for row in cached_value_result]
             units = [row['unit'] for row in cached_value_result]
             unit = ''
             if len(units) > 0:
                 unit = units[0]
             if values:
-                graph.axes.bar(dates, values, lw=1,
+                unit_timedelta = UNIT_TO_TIMEDELTA.get(unit, None)
+                if unit_timedelta:
+                    # We can draw bars corresponding to period
+                    bar_width = graph.get_bar_width(unit_timedelta)
+                    offset = -1 * unit_timedelta
+                    offset_dates = [d + offset for d in dates_notz]
+                else:
+                    # We can only draw spikes.
+                    bar_width = 0 
+                    offset_dates = dates_notz
+                graph.axes.bar(offset_dates,
+                               values,
                                edgecolor='blue',
-                               width=self._get_bar_width(values, unit, graph),
+                               width=bar_width,
                                label=location_name)
             graph.set_ylabel(unit)
             graph.legend()
             # Uses first identifier and breaks the loop
-            break
+
 
         graph.responseobject = HttpResponse(content_type='image/png')
         return graph.png_response()
 
-    def image(self, identifiers, start_date, end_date, width, height,
-    layout_extra=None):
-        """Return imagedata.Implement bar_image."""
-        today = datetime.datetime.now()
-        graph = RainappGraph(start_date, end_date,
-                      width=width, height=height, today=today)
-
-        for identifier in identifiers:
-            location_name = self._get_location_name(identifier)
-            cached_value_result = self._cached_values(identifier,
-                                                      start_date,
-                                                      end_date)
-            dates = [row['datetime'] for row in cached_value_result]
-            values = [row['value'] for row in cached_value_result]
-            units = [row['unit'] for row in cached_value_result]
-            unit = ''
-            if len(units) > 0:
-                unit = units[0]
-            if values:
-                graph.axes.plot(dates, values,
-                                lw=1,
-                                label=location_name)
-            graph.set_ylabel(unit)
-            graph.legend()
-
-        graph.responseobject = HttpResponse(content_type='image/png')
-        return graph.png_response()
-
-    def _tzaware(self, dt, tzinfo):
-        """Make datetime timezone aware"""
-        return datetime.datetime(
-            dt.year, dt.month, dt.day,
-            dt.hour, dt.minute, dt.second,
-            tzinfo=tzinfo)
 
     def _cached_values(self, identifier, start_date, end_date):
         """
@@ -177,47 +163,55 @@ class RainAppAdapter(FewsJdbc):
 
         # End_date often ends with 23:59:59, we want to include at
         # least 1 day in case td=1 day, thus the 2 seconds.
-        end = end_date - td + datetime.timedelta(seconds=2)
-        period_counter = start_date
         one_hour = datetime.timedelta(seconds=3600)
+        end = end_date - td + datetime.timedelta(seconds=2)
+
+        # A period effectively begins an hour before the first value, except for
+        # 24hour data.
+        period_counter = datetime.datetime(
+            year = start_date.year,
+            month = start_date.month,
+            day = start_date.day,
+            hour = start_date.hour,
+            tzinfo = start_date.tzinfo,
+        )
 
         # Fast way to calculate sum values.
         len_values = len(values)
-        min_index, max_index = 0, 0
+        min_index, max_index = 0, -1  # Nothing todo with backwards indexing...
         sum_values = 0
+
         while period_counter < end:
             period_start = period_counter
             period_end = period_counter + td
 
             # Calculate value by subtracting value(s) from front and
-            # adding new value(s) from end.
+            # adding new value(s) from end. Min_index and max_index
+            # always represent the current contents of sum_values
             while (max_index + 1 < len_values and
-                   values[max_index+1]['datetime'] < period_end):
+                   values[max_index + 1]['datetime'] < period_end):
 
-                sum_values += values[max_index + 1]['value']
                 max_index += 1
+                sum_values += values[max_index]['value']
 
-            while (min_index < max_index and
+            while (min_index <= max_index and
                    values[min_index]['datetime'] < period_start):
 
                 sum_values -= values[min_index]['value']
                 min_index += 1
 
             max_values.append({
-                    'value': sum_values, 'datetime': period_counter})
+                    'value': sum_values,
+                    'datetime': period_start,
+            })
 
             period_counter += one_hour
-
         return max_values
 
     def rain_stats(self, values, td, start_date, end_date):
         """
         Calculate stats.
 
-        TODO: make faster by caching the data.
-
-        TODO: add herhalingstijd. needs: bui_duur [uren], oppervlakte
-        [vierkante km] neerslag_som [mm]
         """
         logger.debug('Calculating rain stats for start=%s, end=%s, td=%s' %
                      (start_date, end_date, td))
@@ -237,7 +231,6 @@ class RainAppAdapter(FewsJdbc):
         end_date = self._tzaware(
             end_date,
             tzinfo=values[0]['datetime'].tzinfo)
-
         max_values = self._max_values(values, td, start_date, end_date)
 
         if max_values:
@@ -284,32 +277,27 @@ class RainAppAdapter(FewsJdbc):
             datetime.timedelta(hours=1)]
         for identifier in identifiers:
             values = self._cached_values(identifier, start_date, end_date)
-            rain_stats[identifier['location']] = []
+            rain_stats[identifier['location']] = {
+                'location_name': self._get_location_name(identifier),
+                'rain_stats_table': [],
+            }
             for td in td_range:
-                rain_stats[identifier['location']].append(self.rain_stats(
+                rain_stats[identifier['location']]['rain_stats_table'].append(
+                self.rain_stats(
                         values, td,
                         start_date, end_date))
-
         # Collect urls for graphs.
         symbol_url = self.symbol_url()
         if snippet_group:
-            # Image url for snippet_group: can change if snippet_group
-            # properties are altered.
-            img_url = reverse(
-                "lizard_map.snippet_group_image",
-                kwargs={'snippet_group_id': snippet_group.id},
-                )
+            # bar_url for snippet_group: can change if snippet_group
+            # properties are altered. Not implemented in bar image yet
             bar_url = reverse(
                 "lizard_rainapp.snippet_group_rainapp_bars",
                 kwargs={'snippet_group_id': snippet_group.id},
                 )
         else:
-            # Image url: static url composed with all options and
+            # bar_url: static url composed with all options and
             # layout tweak.
-            img_url = reverse(
-                "lizard_map.workspace_item_image",
-                kwargs={'workspace_item_id': self.workspace_item.id},
-                )
             bar_url = reverse(
                 "lizard_rainapp.workspace_item_rainapp_bars",
                 kwargs={'workspace_item_id': self.workspace_item.id},
@@ -318,7 +306,6 @@ class RainAppAdapter(FewsJdbc):
                                    for identifier in identifiers]
             url_extra = '?' + '&'.join(['identifier=%s' % i for i in
                                         identifiers_escaped])
-            img_url += url_extra
             bar_url += url_extra
 
         return render_to_string(
@@ -327,7 +314,6 @@ class RainAppAdapter(FewsJdbc):
              'rain_stats': rain_stats,
              'number_of_locations': len(rain_stats.keys()),
              'symbol_url': symbol_url,
-             'img_url': img_url,
              'bar_url': bar_url,
              'add_snippet': add_snippet,
              'identifiers': identifiers,
