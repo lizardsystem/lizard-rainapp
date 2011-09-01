@@ -1,5 +1,5 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
-import json
+from django.utils import simplejson as json
 
 from django.shortcuts import get_object_or_404
 

@@ -1,6 +1,5 @@
 from __future__ import division
 import datetime
-import json
 import logging
 import iso8601
 
@@ -8,6 +7,7 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.http import HttpResponse
+from django.utils import simplejson as json
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates

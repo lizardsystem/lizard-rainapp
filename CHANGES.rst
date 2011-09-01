@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Using django json util now.
 
 
 0.2 (2011-09-01)
