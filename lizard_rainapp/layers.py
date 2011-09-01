@@ -138,6 +138,9 @@ class RainAppAdapter(FewsJdbc):
             logger.debug('Cache written')
         else:
             logger.debug('Got timeseries from cache')
+        
+        if not values:
+            return []
 
         # Convert datetime strings to datetime in values
         for value in values:
@@ -219,7 +222,6 @@ class RainAppAdapter(FewsJdbc):
             return {
                 'td': td,
                 'max': '-',
-                'datetime': '-',
                 'start': '-',
                 'end': '-',
                 't': '-'}
@@ -259,7 +261,7 @@ class RainAppAdapter(FewsJdbc):
                 snippet.identifier
                 for snippet in snippet_group.snippets.filter(visible=True)]
         title = 'RainApp (%s)' % ', '.join(
-            [identifier['location'] for identifier in identifiers])
+            [self._get_location_name(identifier) for identifier in identifiers])
 
         # Make table with these identifiers.
         # Layer options contain request - not the best way but it works.
@@ -308,6 +310,17 @@ class RainAppAdapter(FewsJdbc):
                                         identifiers_escaped])
             bar_url += url_extra
 
+        snippets = [{
+                'identifier': identifier,
+                'shortname': '%s - %s' % (
+                    self._get_location_name(identifier),
+                    self.workspace_item.name),
+                'name': '%s - %s' % (
+                    self._get_location_name(identifier),
+                    self.workspace_item.name)
+            } for identifier in identifiers]
+
+
         return render_to_string(
             'lizard_rainapp/popup_rainapp.html',
             {'title': title,
@@ -317,4 +330,5 @@ class RainAppAdapter(FewsJdbc):
              'bar_url': bar_url,
              'add_snippet': add_snippet,
              'identifiers': identifiers,
-             'workspace_item': self.workspace_item})
+             'workspace_item': self.workspace_item,
+             'snippets': snippets})

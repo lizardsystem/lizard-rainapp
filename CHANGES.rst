@@ -7,6 +7,14 @@ Changelog of lizard-rainapp
 
 - #3184 Removed graph from popup, put barchart on top. 
 
+- Changed location id's to location names
+
+- Fixed collage screen error
+
+- Added export button in popup and collagescreen
+
+- Added (mm) to max in rainstats
+
 
 0.1 (2011-08-30)
 ----------------

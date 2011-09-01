@@ -24,7 +24,7 @@
   {% endif %}
   <tr>
     <th>Tijdspanne</th>
-    <th>Max</th>
+    <th>Max(mm)</th>
     <th>Start</th>
     <th>Eind</th>
     <th>Herhalingstijd
@@ -44,21 +44,32 @@
 </tbody>
 </table>
 {% endfor %}
-{% if add_snippet %}
 <table>
+  {% for snippet in snippets %}
   <tr>
-    {% for identifier in identifiers %}
+    {% if snippets|length > 1 %}
+    <td>
+      {{ snippet.name }}
+    </td>
+    {% endif %}
+    {% if add_snippet %}
     <td class="button">
       <a href=""
          class="add-snippet ss_chart_line_add ss_sprite"
          data-workspace-id="{{ workspace_item.workspace.id }}"
          data-workspace-item-id="{{ workspace_item.id }}"
-         data-item-identifier='{{ identifier|json_escaped }}'
-         data-item-shortname="{{ identifier.location }}"
-         data-item-name="{{ identifier.location }}"
+         data-item-identifier='{{ snippet.identifier|json_escaped }}'
+         data-item-shortname="{{ snippet.shortname }}"
+         data-item-name="{{ snippet.name }}"
          title="Voeg toe aan collage">&nbsp;</a>
     </td>
-    {% endfor %}
+    {% endif %}
+    <td class="button">
+      <a href="{% url lizard_map.export_identifier_csv %}?workspace_item_id={{ workspace_item.id }}&identifier_json={{ snippet.identifier|json_escaped }}"
+         class="ss_table_save ss_sprite"
+         title="Export csv"
+         >export tijdreeksen</a>
+    </td>
   </tr>
+  {% endfor %}
 </table>
-{% endif %}
