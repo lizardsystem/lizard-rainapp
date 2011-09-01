@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.2 (unreleased)
+0.2 (2011-09-01)
 ----------------
 
 - #3184 Removed graph from popup, put barchart on top. 
