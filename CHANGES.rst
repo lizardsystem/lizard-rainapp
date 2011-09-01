@@ -15,6 +15,11 @@ Changelog of lizard-rainapp
 
 - Added (mm) to max in rainstats
 
+- Fixed bug in max calculation that neglected first value
+
+- Adjusted max calculation that now only uses data that fully fit in the
+  window
+
 
 0.1 (2011-08-30)
 ----------------

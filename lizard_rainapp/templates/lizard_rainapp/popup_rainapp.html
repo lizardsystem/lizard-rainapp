@@ -19,12 +19,12 @@
 <thead>
   {% if number_of_locations > 1 %}
   <tr>
-    <th>{{ rain_stats_data.location_name }}</th>
+    <th colspan="2">{{ rain_stats_data.location_name }}</th>
   </tr>
   {% endif %}
   <tr>
     <th>Tijdspanne</th>
-    <th>Max(mm)</th>
+    <th>Max (mm)</th>
     <th>Start</th>
     <th>Eind</th>
     <th>Herhalingstijd
@@ -34,11 +34,11 @@
 <tbody>
   {% for rain_stat_row in rain_stats_data.rain_stats_table %}
   <tr>
-  <td>{{ rain_stat_row.td|short_timedelta }}</td>
-  <td>{{ rain_stat_row.max|floatformat:1 }}</td>
-  <td>{{ rain_stat_row.start|date:"d-m-Y H:i" }}</td>
-  <td>{{ rain_stat_row.end|date:"d-m-Y H:i" }}</td>
-  <td>T = {{ rain_stat_row.t|floatformat:0 }}</td>
+  <td>{{ rain_stat_row.td_window|short_timedelta }}</td>
+  <td>{{ rain_stat_row.max|floatformat:0|default:'-' }}</td>
+  <td>{{ rain_stat_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
+  <td>{{ rain_stat_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
+  <td>T = {{ rain_stat_row.t|floatformat:0|default:'' }}</td>
   </tr>
   {% endfor %}
 </tbody>
@@ -66,7 +66,7 @@
     {% endif %}
     <td class="button">
       <a href="{% url lizard_map.export_identifier_csv %}?workspace_item_id={{ workspace_item.id }}&identifier_json={{ snippet.identifier|json_escaped }}"
-         class="ss_table_save ss_sprite"
+         class="ss_table_save ss_sprite noprint"
          title="Export csv"
          >export tijdreeksen</a>
     </td>

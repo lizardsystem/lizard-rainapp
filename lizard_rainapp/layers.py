@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 UNIT_TO_TIMEDELTA = {
     'mm/24hr': datetime.timedelta(hours=24),
-    'mm/3hr': datetime.timedelta(hours=3),
+    'mm/3hr': datetime.timedelta(hours=3),  # Not encountered yet
     'mm/hr': datetime.timedelta(hours=1),
     'mm/5min': datetime.timedelta(minutes=5),
 }
@@ -99,10 +99,13 @@ class RainAppAdapter(FewsJdbc):
                                label=location_name)
             graph.set_ylabel(unit)
             graph.legend()
-            # Uses first identifier and breaks the loop
+
+            # Use first identifier and breaks the loop
+            break
 
 
         graph.responseobject = HttpResponse(content_type='image/png')
+
         return graph.png_response()
 
 
@@ -157,74 +160,104 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def _max_values(self, values, td, start_date, end_date):
-        """
-        """
+    def _max_values(self, values, td_window, td_value, start_date, end_date):
+        """Return list of max values in window of td_window.
+
+        Requires len(values) > 0."""
         max_values = []
 
         # Loop values and calc max for each period. Slow, but it works.
 
         # End_date often ends with 23:59:59, we want to include at
-        # least 1 day in case td=1 day, thus the 2 seconds.
-        one_hour = datetime.timedelta(seconds=3600)
-        end = end_date - td + datetime.timedelta(seconds=2)
+        # least 1 day in case td_window=1 day, thus the 2 seconds.
+        window_start_last = end_date - td_window + datetime.timedelta(seconds=2)
 
-        # A period effectively begins an hour before the first value, except for
-        # 24hour data.
-        period_counter = datetime.datetime(
-            year = start_date.year,
-            month = start_date.month,
-            day = start_date.day,
-            hour = start_date.hour,
-            tzinfo = start_date.tzinfo,
-        )
+        # Calculate start of first window based on td_value
+        if (td_value.days == 1):
+            # 24 hour data, find hour_of_day of values and first occurrence
+            # before start_date
+            window_start = datetime.datetime(
+                year = start_date.year,
+                month = start_date.month,
+                day = start_date.day,
+                hour = values[0]['datetime'].hour,
+                tzinfo = start_date.tzinfo,
+            )
+            if (window_start > start_date):
+                window_start -= td_value
+        elif (td_value.seconds == 3600):
+            # one hour data, fix to whole hour before startdate
+            window_start = datetime.datetime(
+                year = start_date.year,
+                month = start_date.month,
+                day = start_date.day,
+                hour = start_date.hour,
+                tzinfo = start_date.tzinfo,
+            )
+        elif (td_value.seconds == 300):
+            # five minute data, fix to whole five minutes before startdate
+            window_start = datetime.datetime(
+                year = start_date.year,
+                month = start_date.month,
+                day = start_date.day,
+                hour = start_date.hour,
+                minute = 5 * int(start_date.minute / 5),
+                tzinfo = start_date.tzinfo,
+            )
 
         # Fast way to calculate sum values.
         len_values = len(values)
         min_index, max_index = 0, -1  # Nothing todo with backwards indexing...
         sum_values = 0
 
-        while period_counter < end:
-            period_start = period_counter
-            period_end = period_counter + td
+        while window_start < window_start_last:
+            window_end = window_start + td_window
 
             # Calculate value by subtracting value(s) from front and
             # adding new value(s) from end. Min_index and max_index
-            # always represent the current contents of sum_values
+            # always represent the current contents of sum_values.
+
+            # For a value to be added to the sum both ends of the timespan to
+            # which the value applies need to be in the window.
             while (max_index + 1 < len_values and
-                   values[max_index + 1]['datetime'] < period_end):
+                   values[max_index + 1]['datetime'] - td_value >=
+                                 window_start and
+                   values[max_index + 1]['datetime'] <= window_end):
 
                 max_index += 1
                 sum_values += values[max_index]['value']
 
+            # For a value to be removed only the oldest end of the timespan to
+            # which the value applies needs to fall outside the window, since
+            # the window is moving forward in time.
             while (min_index <= max_index and
-                   values[min_index]['datetime'] < period_start):
-
+                   values[min_index]['datetime'] - td_value < window_start):
                 sum_values -= values[min_index]['value']
                 min_index += 1
 
-            max_values.append({
-                    'value': sum_values,
-                    'datetime': period_start,
-            })
+            if max_index >= min_index:
+                max_values.append({
+                        'value': sum_values,
+                        'datetime': window_start,
+                })
 
-            period_counter += one_hour
+            window_start += td_value
         return max_values
 
-    def rain_stats(self, values, td, start_date, end_date):
+    def rain_stats(self, values, td_window, start_date, end_date):
         """
         Calculate stats.
 
         """
-        logger.debug('Calculating rain stats for start=%s, end=%s, td=%s' %
-                     (start_date, end_date, td))
+        logger.debug('Calculating rain stats for start=%s, end=%s, td_window=%s' %
+                     (start_date, end_date, td_window))
         if not values:
             return {
-                'td': td,
-                'max': '-',
-                'start': '-',
-                'end': '-',
-                't': '-'}
+                'td_window': td_window,
+                'max': None,
+                'start': None,
+                'end': None,
+                't': None}
 
         # Make start_date and end_date tz aware
         start_date = self._tzaware(
@@ -233,19 +266,20 @@ class RainAppAdapter(FewsJdbc):
         end_date = self._tzaware(
             end_date,
             tzinfo=values[0]['datetime'].tzinfo)
-        max_values = self._max_values(values, td, start_date, end_date)
+        td_value = UNIT_TO_TIMEDELTA[values[0]['unit']]
+        max_values = self._max_values(values, td_window, td_value, start_date, end_date)
 
         if max_values:
             max_value = max(max_values, key=lambda i: i['value'])
-            max_value['datetime_end'] = max_value['datetime'] + td
-            hours = td.days * 24 + td.seconds / 3600.0
+            max_value['datetime_end'] = max_value['datetime'] + td_window
+            hours = td_window.days * 24 + td_window.seconds / 3600.0
             t = herhalingstijd(hours, 25, max_value['value'])
         else:
-            max_value = {'value': '-', 'datetime': '-', 'datetime_end': '-'}
-            t = '-'
+            max_value = {'value': None, 'datetime': None, 'datetime_end': None}
+            t = None
 
         return {
-            'td': td,
+            'td_window': td_window,
             'max': max_value['value'],
             'start': max_value['datetime'],
             'end': max_value['datetime_end'],
@@ -272,7 +306,7 @@ class RainAppAdapter(FewsJdbc):
         # with 'max', 'start', 'end', '..'
         rain_stats = {}
 
-        td_range = [
+        td_windows = [
             datetime.timedelta(days=2),
             datetime.timedelta(days=1),
             datetime.timedelta(hours=3),
@@ -283,10 +317,10 @@ class RainAppAdapter(FewsJdbc):
                 'location_name': self._get_location_name(identifier),
                 'rain_stats_table': [],
             }
-            for td in td_range:
+            for td_window in td_windows:
                 rain_stats[identifier['location']]['rain_stats_table'].append(
                 self.rain_stats(
-                        values, td,
+                        values, td_window,
                         start_date, end_date))
         # Collect urls for graphs.
         symbol_url = self.symbol_url()
