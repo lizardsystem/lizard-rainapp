@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '0.4dev'
+version = '0.4'
 
 long_description = '\n\n'.join([
     open('README.rst').read(),
@@ -16,7 +16,7 @@ install_requires = [
     'lizard-fewsjdbc >= 1.18',
     'lizard-map >= 2.1.13',
     'lizard-ui >= 3.0',
-    'nens-graph >= 0.2',
+    'nens-graph >= 0.3',
     'nens-graph',
     'pkginfo',
     ],

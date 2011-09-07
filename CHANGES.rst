@@ -2,10 +2,22 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.4 (unreleased)
+0.4 (2011-09-07)
 ----------------
 
-- Nothing changed yet.
+- Made calculations better suited for 24 hour data at arbitrary hour of day.
+
+- Moved max_values calculation to calculations.py and renamed to moving_sum.
+
+- Added tests for max_values calculation.
+
+- Moved all specific tests to test_calculations.py
+
+- Improved moving_sum so that it skips possible values before start_date.
+
+- Fixed #3194, Multiple graphs if multiple locations.
+
+- Fixed bug in _cached_values if there are no values.
 
 
 0.3 (2011-09-01)

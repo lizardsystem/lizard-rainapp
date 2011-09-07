@@ -5,21 +5,21 @@
   <img src="{{ symbol_url }}" />&nbsp;
   <strong>{{ title|truncatewords:8 }}</strong>
 </div>
+{% for element in info %}
 {# bar graph #}
 <div style="width: 100%; height: 240px;"
      class="img-use-my-size">
-  <a href="{{ bar_url }}"
+  <a href="{{ element.image_url }}"
      class="replace-with-image">
     afbeelding nog niet geladen
   </a>
 </div>
 {# table #}
-{% for rain_stats_location, rain_stats_data in rain_stats.items %}
 <table>
 <thead>
-  {% if number_of_locations > 1 %}
+  {% if info|length > 1 %}
   <tr>
-    <th colspan="2">{{ rain_stats_data.location_name }}</th>
+    <th colspan="2">{{ element.location }}</th>
   </tr>
   {% endif %}
   <tr>
@@ -32,24 +32,23 @@
   </tr>
 </thead>
 <tbody>
-  {% for rain_stat_row in rain_stats_data.rain_stats_table %}
+  {% for table_row in element.table %}
   <tr>
-  <td>{{ rain_stat_row.td_window|short_timedelta }}</td>
-  <td>{{ rain_stat_row.max|floatformat:0|default:'-' }}</td>
-  <td>{{ rain_stat_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>{{ rain_stat_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>T = {{ rain_stat_row.t|floatformat:0|default:'' }}</td>
+  <td>{{ table_row.td_window|short_timedelta }}</td>
+  <td>{{ table_row.max|floatformat:0|default:'-' }}</td>
+  <td>{{ table_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
+  <td>{{ table_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
+  <td>T = {{ table_row.t|floatformat:0|default:'' }}</td>
   </tr>
   {% endfor %}
 </tbody>
 </table>
-{% endfor %}
+{# Extra buttons #}
 <table>
-  {% for snippet in snippets %}
   <tr>
-    {% if snippets|length > 1 %}
+    {% if info|length > 1 %}
     <td>
-      {{ snippet.name }}
+      {{ element.name }}
     </td>
     {% endif %}
     {% if add_snippet %}
@@ -58,18 +57,18 @@
          class="add-snippet ss_chart_line_add ss_sprite"
          data-workspace-id="{{ workspace_item.workspace.id }}"
          data-workspace-item-id="{{ workspace_item.id }}"
-         data-item-identifier='{{ snippet.identifier|json_escaped }}'
-         data-item-shortname="{{ snippet.shortname }}"
-         data-item-name="{{ snippet.name }}"
+         data-item-identifier='{{ element.identifier|json_escaped }}'
+         data-item-shortname="{{ element.shortname }}"
+         data-item-name="{{ element.name }}"
          title="Voeg toe aan collage">&nbsp;</a>
     </td>
     {% endif %}
     <td class="button">
-      <a href="{% url lizard_map.export_identifier_csv %}?workspace_item_id={{ workspace_item.id }}&identifier_json={{ snippet.identifier|json_escaped }}"
+      <a href="{% url lizard_map.export_identifier_csv %}?workspace_item_id={{workspace_item.id }}&identifier_json={{ element.identifier|json_escaped }}"
          class="ss_table_save ss_sprite noprint"
          title="Export csv"
          >export tijdreeksen</a>
     </td>
   </tr>
-  {% endfor %}
 </table>
+{% endfor %}

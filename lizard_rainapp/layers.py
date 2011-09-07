@@ -12,6 +12,7 @@ from django.utils import simplejson as json
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
 from lizard_rainapp.calculations import herhalingstijd
+from lizard_rainapp.calculations import moving_sum
 
 from nens_graph.rainapp import RainappGraph
 
@@ -31,20 +32,6 @@ class RainAppAdapter(FewsJdbc):
 
     identifier: {'location': <locationid>}
     """
-
-    def _tzaware(self, dt, tzinfo):
-        """Make datetime timezone aware"""
-        return datetime.datetime(
-            dt.year, dt.month, dt.day,
-            dt.hour, dt.minute, dt.second,
-            tzinfo=tzinfo)
-
-    def _tzunaware(self, dt):
-        """Make datetime timezone unaware"""
-        return datetime.datetime(
-            dt.year, dt.month, dt.day,
-            dt.hour, dt.minute, dt.second,
-            tzinfo=None)
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
@@ -73,9 +60,9 @@ class RainAppAdapter(FewsJdbc):
             cached_value_result = self._cached_values(identifier,
                                                       start_date,
                                                       end_date)
-            dates_notz = [self._tzunaware(row['datetime'])
-                for row in cached_value_result]
-            
+            dates_notz = [row['datetime'].replace(tzinfo=None)
+                          for row in cached_value_result]
+
             values = [row['value'] for row in cached_value_result]
             units = [row['unit'] for row in cached_value_result]
             unit = ''
@@ -90,7 +77,7 @@ class RainAppAdapter(FewsJdbc):
                     offset_dates = [d + offset for d in dates_notz]
                 else:
                     # We can only draw spikes.
-                    bar_width = 0 
+                    bar_width = 0
                     offset_dates = dates_notz
                 graph.axes.bar(offset_dates,
                                values,
@@ -98,16 +85,15 @@ class RainAppAdapter(FewsJdbc):
                                width=bar_width,
                                label=location_name)
             graph.set_ylabel(unit)
-            graph.legend()
+            # graph.legend()
+            graph.suptitle(location_name)
 
             # Use first identifier and breaks the loop
             break
 
-
         graph.responseobject = HttpResponse(content_type='image/png')
 
         return graph.png_response()
-
 
     def _cached_values(self, identifier, start_date, end_date):
         """
@@ -141,7 +127,7 @@ class RainAppAdapter(FewsJdbc):
             logger.debug('Cache written')
         else:
             logger.debug('Got timeseries from cache')
-        
+
         if not values:
             return []
 
@@ -150,8 +136,10 @@ class RainAppAdapter(FewsJdbc):
             value['datetime'] = iso8601.parse_date(value['datetime_str'])
             del value['datetime_str']
 
-        start_date = self._tzaware(start_date, values[0]['datetime'].tzinfo)
-        end_date = self._tzaware(end_date, values[0]['datetime'].tzinfo)
+        # Make start_date and end_date tz aware
+        start_date = start_date.replace(tzinfo=values[0]['datetime'].tzinfo)
+        end_date = end_date.replace(tzinfo=values[0]['datetime'].tzinfo)
+
         # Remove datetimes out of range.
         while values and values[0]['datetime'] < start_date:
             del values[0]
@@ -160,96 +148,13 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def _max_values(self, values, td_window, td_value, start_date, end_date):
-        """Return list of max values in window of td_window.
-
-        Requires len(values) > 0."""
-        max_values = []
-
-        # Loop values and calc max for each period. Slow, but it works.
-
-        # End_date often ends with 23:59:59, we want to include at
-        # least 1 day in case td_window=1 day, thus the 2 seconds.
-        window_start_last = end_date - td_window + datetime.timedelta(seconds=2)
-
-        # Calculate start of first window based on td_value
-        if (td_value.days == 1):
-            # 24 hour data, find hour_of_day of values and first occurrence
-            # before start_date
-            window_start = datetime.datetime(
-                year = start_date.year,
-                month = start_date.month,
-                day = start_date.day,
-                hour = values[0]['datetime'].hour,
-                tzinfo = start_date.tzinfo,
-            )
-            if (window_start > start_date):
-                window_start -= td_value
-        elif (td_value.seconds == 3600):
-            # one hour data, fix to whole hour before startdate
-            window_start = datetime.datetime(
-                year = start_date.year,
-                month = start_date.month,
-                day = start_date.day,
-                hour = start_date.hour,
-                tzinfo = start_date.tzinfo,
-            )
-        elif (td_value.seconds == 300):
-            # five minute data, fix to whole five minutes before startdate
-            window_start = datetime.datetime(
-                year = start_date.year,
-                month = start_date.month,
-                day = start_date.day,
-                hour = start_date.hour,
-                minute = 5 * int(start_date.minute / 5),
-                tzinfo = start_date.tzinfo,
-            )
-
-        # Fast way to calculate sum values.
-        len_values = len(values)
-        min_index, max_index = 0, -1  # Nothing todo with backwards indexing...
-        sum_values = 0
-
-        while window_start < window_start_last:
-            window_end = window_start + td_window
-
-            # Calculate value by subtracting value(s) from front and
-            # adding new value(s) from end. Min_index and max_index
-            # always represent the current contents of sum_values.
-
-            # For a value to be added to the sum both ends of the timespan to
-            # which the value applies need to be in the window.
-            while (max_index + 1 < len_values and
-                   values[max_index + 1]['datetime'] - td_value >=
-                                 window_start and
-                   values[max_index + 1]['datetime'] <= window_end):
-
-                max_index += 1
-                sum_values += values[max_index]['value']
-
-            # For a value to be removed only the oldest end of the timespan to
-            # which the value applies needs to fall outside the window, since
-            # the window is moving forward in time.
-            while (min_index <= max_index and
-                   values[min_index]['datetime'] - td_value < window_start):
-                sum_values -= values[min_index]['value']
-                min_index += 1
-
-            if max_index >= min_index:
-                max_values.append({
-                        'value': sum_values,
-                        'datetime': window_start,
-                })
-
-            window_start += td_value
-        return max_values
-
     def rain_stats(self, values, td_window, start_date, end_date):
         """
         Calculate stats.
 
         """
-        logger.debug('Calculating rain stats for start=%s, end=%s, td_window=%s' %
+        logger.debug(('Calculating rain stats for' +
+                      'start=%s, end=%s, td_window=%s') %
                      (start_date, end_date, td_window))
         if not values:
             return {
@@ -260,14 +165,15 @@ class RainAppAdapter(FewsJdbc):
                 't': None}
 
         # Make start_date and end_date tz aware
-        start_date = self._tzaware(
-            start_date,
-            tzinfo=values[0]['datetime'].tzinfo)
-        end_date = self._tzaware(
-            end_date,
-            tzinfo=values[0]['datetime'].tzinfo)
+        start_date = start_date.replace(tzinfo=values[0]['datetime'].tzinfo)
+        end_date = end_date.replace(tzinfo=values[0]['datetime'].tzinfo)
+
         td_value = UNIT_TO_TIMEDELTA[values[0]['unit']]
-        max_values = self._max_values(values, td_window, td_value, start_date, end_date)
+        max_values = moving_sum(values,
+                                td_window,
+                                td_value,
+                                start_date,
+                                end_date)
 
         if max_values:
             max_value = max(max_values, key=lambda i: i['value'])
@@ -295,74 +201,66 @@ class RainAppAdapter(FewsJdbc):
                 snippet.identifier
                 for snippet in snippet_group.snippets.filter(visible=True)]
         title = 'RainApp (%s)' % ', '.join(
-            [self._get_location_name(identifier) for identifier in identifiers])
+            [self._get_location_name(identifier)
+             for identifier in identifiers])
 
-        # Make table with these identifiers.
+        # Make table with given identifiers.
         # Layer options contain request - not the best way but it works.
         start_date, end_date = current_start_end_dates(
             layout_options['request'])
 
-        # Contains list of tables. A table is a list of rows/dicts
-        # with 'max', 'start', 'end', '..'
-        rain_stats = {}
+        td_windows = [datetime.timedelta(days=2),
+                      datetime.timedelta(days=1),
+                      datetime.timedelta(hours=3),
+                      datetime.timedelta(hours=1)]
 
-        td_windows = [
-            datetime.timedelta(days=2),
-            datetime.timedelta(days=1),
-            datetime.timedelta(hours=3),
-            datetime.timedelta(hours=1)]
-        for identifier in identifiers:
-            values = self._cached_values(identifier, start_date, end_date)
-            rain_stats[identifier['location']] = {
-                'location_name': self._get_location_name(identifier),
-                'rain_stats_table': [],
-            }
-            for td_window in td_windows:
-                rain_stats[identifier['location']]['rain_stats_table'].append(
-                self.rain_stats(
-                        values, td_window,
-                        start_date, end_date))
-        # Collect urls for graphs.
+        info = []
+
         symbol_url = self.symbol_url()
+
         if snippet_group:
-            # bar_url for snippet_group: can change if snippet_group
-            # properties are altered. Not implemented in bar image yet
-            bar_url = reverse(
+            # Note that the rainapp image does not support tweaking labels
+            image_url_base = reverse(
                 "lizard_rainapp.snippet_group_rainapp_bars",
                 kwargs={'snippet_group_id': snippet_group.id},
-                )
+            )
         else:
-            # bar_url: static url composed with all options and
-            # layout tweak.
-            bar_url = reverse(
+            image_url_base = reverse(
                 "lizard_rainapp.workspace_item_rainapp_bars",
                 kwargs={'workspace_item_id': self.workspace_item.id},
-                )
-            identifiers_escaped = [json.dumps(identifier).replace('"', '%22')
-                                   for identifier in identifiers]
-            url_extra = '?' + '&'.join(['identifier=%s' % i for i in
-                                        identifiers_escaped])
-            bar_url += url_extra
+            )
 
-        snippets = [{
+        for identifier in identifiers:
+
+            values = self._cached_values(identifier, start_date, end_date)
+
+            if snippet_group:
+                url_extra = ''
+            else:
+                identifier_escaped = json.dumps(identifier).replace('"', '%22')
+                url_extra = '?&identifier=%s' % identifier_escaped
+
+            info.append({
                 'identifier': identifier,
                 'shortname': '%s - %s' % (
                     self._get_location_name(identifier),
                     self.workspace_item.name),
                 'name': '%s - %s' % (
                     self._get_location_name(identifier),
-                    self.workspace_item.name)
-            } for identifier in identifiers]
-
+                    self.workspace_item.name),
+                'location': self._get_location_name(identifier),
+                'table': [self.rain_stats(values,
+                                          td_window,
+                                          start_date,
+                                          end_date)
+                          for td_window in td_windows],
+                'image_url': image_url_base + url_extra,
+            })
 
         return render_to_string(
             'lizard_rainapp/popup_rainapp.html',
             {'title': title,
-             'rain_stats': rain_stats,
-             'number_of_locations': len(rain_stats.keys()),
              'symbol_url': symbol_url,
-             'bar_url': bar_url,
              'add_snippet': add_snippet,
-             'identifiers': identifiers,
              'workspace_item': self.workspace_item,
-             'snippets': snippets})
+             'info': info})
