@@ -43,13 +43,13 @@ class RainAppAdapter(FewsJdbc):
 
         return location_name
 
-    def bar_image(self,
-                  identifiers,
-                  start_date,
-                  end_date,
-                  width,
-                  height,
-                  layout_extra=None):
+    def image(self,
+              identifiers,
+              start_date,
+              end_date,
+              width,
+              height,
+              layout_extra=None):
         """Return png image data for barchart."""
         today = datetime.datetime.now()
         graph = RainappGraph(start_date, end_date,
@@ -217,16 +217,15 @@ class RainAppAdapter(FewsJdbc):
         info = []
 
         symbol_url = self.symbol_url()
-
         if snippet_group:
             # Note that the rainapp image does not support tweaking labels
             image_url_base = reverse(
-                "lizard_rainapp.snippet_group_rainapp_bars",
+                "lizard_map.snippet_group_image",
                 kwargs={'snippet_group_id': snippet_group.id},
             )
         else:
             image_url_base = reverse(
-                "lizard_rainapp.workspace_item_rainapp_bars",
+                "lizard_map.workspace_item_image",
                 kwargs={'workspace_item_id': self.workspace_item.id},
             )
 

@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Renamed adapters bar_image to image and removed all extra urls and views.
 
 
 0.4 (2011-09-07)

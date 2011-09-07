@@ -25,14 +25,6 @@ urlpatterns = patterns(
          'filter_url_name': 'lizard_rainapp.jdbc_source'},
         name="lizard_rainapp.jdbc_source",
         ),
-    url(r'^snippet_group/(?P<snippet_group_id>.*)/$',
-        'lizard_rainapp.views.snippet_group_rainapp_bars',
-        name='lizard_rainapp.snippet_group_rainapp_bars',
-        ),
-    url(r'^workspace_item/(?P<workspace_item_id>\d+)/$',
-        'lizard_rainapp.views.workspace_item_rainapp_bars',
-        name='lizard_rainapp.workspace_item_rainapp_bars',
-        ),
     (r'^admin/', include(admin.site.urls)),
     )
 
