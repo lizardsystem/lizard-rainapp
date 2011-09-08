@@ -5,6 +5,8 @@ Changelog of lizard-rainapp
 0.5 (unreleased)
 ----------------
 
+- Added model MunicipalityPolygon.
+
 - Renamed adapters bar_image to image and removed all extra urls and views.
 
 
