@@ -9,6 +9,8 @@ Changelog of lizard-rainapp
 
 - Renamed adapters bar_image to image and removed all extra urls and views.
 
+- Added shape and import script for municipality objects.
+
 
 0.4 (2011-09-07)
 ----------------
