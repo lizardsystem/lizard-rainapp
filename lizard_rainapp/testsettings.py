@@ -29,13 +29,13 @@ DATABASES = {
     # the specified database exists. When the tests cannot run, Jenkins sees
     # that as an error.
     'default': {
-        'NAME': os.path.join(BUILDOUT_DIR, 'var', 'sqlite', 'test.db'),
-        'ENGINE': 'django.db.backends.sqlite3',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',  # empty string for localhost.
-        'PORT': '',  # empty string for default.
-        }
+        'NAME': 'rainapp',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'USER': 'buildout',
+        'PASSWORD': 'buildout',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        },
     }
 SITE_ID = 1
 INSTALLED_APPS = [
@@ -62,6 +62,7 @@ STATIC_URL = '/static_media/'
 STATIC_ROOT = os.path.join(BUILDOUT_DIR, 'var', 'static')
 STATICFILES_FINDERS = STATICFILES_FINDERS
 
+SOUTH_TESTS_MIGRATE = False
 
 try:
     # Import local settings that aren't stored in svn.

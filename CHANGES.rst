@@ -11,6 +11,21 @@ Changelog of lizard-rainapp
 
 - Added shape and import script for municipality objects.
 
+- Added script to import fewsdata for a single datetime of all municipalities.
+
+- Added layer method to adapter that municipalities according to a lizard_shape
+  legend
+
+- Added search method to adapter that does a spatial query on the database
+
+- Modified the statistics so that the 'herhalingstijd' is now based on the real
+  area of the municipalities.
+
+- Added test for the conversion of square meters to square km.
+
+- changed database setting in testsettings to postgis database, otherwise tests
+  don't work.
+
 
 0.4 (2011-09-07)
 ----------------

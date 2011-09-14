@@ -10,7 +10,7 @@ from lizard_map import coordinates
 from lizard_map.models import Workspace
 from lizard_map.models import WorkspaceItem
 
-from lizard_rainapp.models import MunicipalityPolygon
+from lizard_rainapp.models import GeoObject
 
 logger = logging.getLogger(__name__)
 
@@ -27,18 +27,18 @@ def load_shapefile():
     source = drv.Open(shapefile_filename)
     layer = source.GetLayer()
 
-    if MunicipalityPolygon.objects.count():
-        logger.info("First deleting the existing municipality polygons...")
-        MunicipalityPolygon.objects.all().delete()
+    if GeoObject.objects.count():
+        logger.info("First deleting the existing geoobjects...")
+        GeoObject.objects.all().delete()
 
-    logger.info("Importing new municipality polygons...")
+    logger.info("Importing new geoobjects...")
     number_of_features = 0
     for feature in layer:
-
         geom = feature.GetGeometryRef()
         # Optional extra things to do with the shape
         # geom.Transform(coordinate_transformation)
         # geom.FlattenTo2D()
+        # import pdb;pdb.set_trace()
 
         kwargs = {
             'municipality_id': feature.GetField(feature.GetFieldIndex('ID')),
@@ -47,10 +47,10 @@ def load_shapefile():
             'x': feature.GetField(feature.GetFieldIndex('X')),
             'y': feature.GetField(feature.GetFieldIndex('Y')),
             'area': feature.GetField(feature.GetFieldIndex('OPP')),
-            'geom':  geom.ExportToWkt(),
+            'geometry': GEOSGeometry(geom.ExportToWkt(), srid=4326),
         }
-        municipalitypolygon = MunicipalityPolygon(**kwargs)
-        municipalitypolygon.save()
+        geoobject = GeoObject(**kwargs)
+        geoobject.save()
         number_of_features += 1
     logger.info("Added %s municipalty polygons.", number_of_features)
 

@@ -20,6 +20,10 @@ B_disp_2 = -0.01768042
 B_disp_3 = -0.01398795
 
 
+def meter_square_to_km_square(meter_square):
+    return meter_square / pow(10, 6)
+
+
 def herhalingstijd(bui_duur, oppervlak, neerslag_som):
     """Calculate 'herhalingstijd' of a rainshower.
 
@@ -27,7 +31,6 @@ def herhalingstijd(bui_duur, oppervlak, neerslag_som):
     oppervlak in [vierkante km]
     neerslag_som in [mm]
     """
-
     #locatie parameter (formule 6 Aart)
     loc = B_loc_1 * bui_duur ** B_loc_2 + (
         B_loc_3 + B_loc_4 * log(bui_duur)) * oppervlak ** B_loc_5

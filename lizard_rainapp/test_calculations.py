@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import tzinfo
 
 from django.test import TestCase
+from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.calculations import herhalingstijd
 from lizard_rainapp.calculations import moving_sum
 
@@ -62,6 +63,11 @@ class FixedOffset(tzinfo):
 
 
 class ComputeTestSuite(TestCase):
+
+    def test_meter_square_to_km_square(self):
+        """Test area conversion."""
+        self.assertAlmostEqual(5.2,
+                               meter_square_to_km_square(5.2 * pow(10, 6)))
 
     def test_herhalingstijd(self):
         """Test herhalingstijd calculation."""

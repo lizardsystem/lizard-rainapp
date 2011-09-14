@@ -2,17 +2,27 @@ from __future__ import division
 import datetime
 import logging
 import iso8601
+import mapnik
 
+from django.db.models import Max
+from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils import simplejson as json
+from django.contrib.gis.geos import Point
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
+from lizard_map.coordinates import RD
+from lizard_map.coordinates import google_to_rd
+from lizard_shape.models import ShapeLegendClass
 from lizard_rainapp.calculations import herhalingstijd
 from lizard_rainapp.calculations import moving_sum
+from lizard_rainapp.calculations import meter_square_to_km_square
+from lizard_rainapp.models import GeoObject
+from lizard_rainapp.models import RainValue
 
 from nens_graph.rainapp import RainappGraph
 
@@ -25,6 +35,8 @@ UNIT_TO_TIMEDELTA = {
     'mm/5min': datetime.timedelta(minutes=5),
 }
 
+LEGEND_ID = 68
+
 
 class RainAppAdapter(FewsJdbc):
     """
@@ -32,6 +44,9 @@ class RainAppAdapter(FewsJdbc):
 
     identifier: {'location': <locationid>}
     """
+    def __init__(self, *args, **kwargs):
+        super(RainAppAdapter, self).__init__(
+            *args, **kwargs)
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
@@ -42,6 +57,104 @@ class RainAppAdapter(FewsJdbc):
             if location['locationid'] == location_id][0]
 
         return location_name
+
+    
+    def layer(self, *args, **kwargs):
+        """Return mapnik layers and styles."""
+
+        # rainapp_rule = mapnik.Rule()
+        # rainapp_rule.set_else(True)
+        # rainapp_rule.filter = mapnik.Filter("[value] > 0 and [value] < 0.2")
+        # TODO use the legend class and use the layers from the legend.
+        # fill = mapnik.PolygonSymbolizer(mapnik.Color('#7F7FFF'))
+        # edge = mapnik.LineSymbolizer(mapnik.Color('#0000FF'), 1)
+        # rainapp_rule.symbols.extend([fill, edge])
+
+        slc = ShapeLegendClass.objects.get(pk=LEGEND_ID)
+        rainapp_style = slc.mapnik_style()
+        maxdate = RainValue.objects.filter(
+            parameterkey=self.parameterkey).aggregate(
+            md=Max('datetime'))['md']
+        maxdate_str = maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
+
+        query = """(
+            select
+                rav.value as value,
+                gob.geometry as geometry
+            from
+                lizard_rainapp_geoobject gob
+                join lizard_rainapp_rainvalue rav
+                on rav.geo_object_id = gob.id
+            where
+                rav.datetime = '%s' and
+                rav.parameterkey = '%s'
+        ) as data""" % (maxdate_str, self.parameterkey)
+
+        logger.debug(type(query))
+        query = str(query)  # Seems mapnik or postgis don't like unicode?
+
+        
+        default_database = settings.DATABASES['default']
+        datasource = mapnik.PostGIS(
+            host=default_database['HOST'],
+            user=default_database['USER'],
+            password=default_database['PASSWORD'],
+            dbname=default_database['NAME'],
+            table=query,
+            geometry_field='geometry',
+        )
+
+        layer = mapnik.Layer("Gemeenten", RD)
+        layer.datasource = datasource
+
+        layer.styles.append('RainappStyle')
+        
+        styles = {'RainappStyle': rainapp_style}
+        layers = [layer]
+
+        return layers, styles
+
+    def legend(self, updates=None):
+        from lizard_shape.layers import AdapterShapefile
+        la = {
+            'layer_name': 'test',
+            'resource_module': 'test',
+            'resource_name': 'test',
+            'legend_type': 'ShapeLegendClass',
+            'legend_id': LEGEND_ID
+        }
+        asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
+        return asf.legend(updates)
+        
+
+        
+    def search(self, google_x, google_y, radius=None):
+        """Search by coordinates, return matching items as list of dicts
+        """
+
+        rd_point_clicked = Point(*google_to_rd(google_x, google_y))
+        geo_objects = GeoObject.objects.filter(
+            geometry__contains=rd_point_clicked)
+
+
+        result = []
+        for g in geo_objects:
+            identifier = {
+                'location': g.municipality_id,
+                'area_m2': g.geometry.area,
+            }
+            result.append({
+                'identifier': identifier,
+                'distance': 0,
+                'workspace_item': self.workspace_item,
+                # 'object': None,
+                'name': g.name,
+                'shortname': g.name,
+                'google_coords': (google_x, google_y),
+            })
+            
+
+        return result
 
     def image(self,
               identifiers,
@@ -148,7 +261,7 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def rain_stats(self, values, td_window, start_date, end_date):
+    def rain_stats(self, values, area_km2, td_window, start_date, end_date):
         """
         Calculate stats.
 
@@ -179,7 +292,7 @@ class RainAppAdapter(FewsJdbc):
             max_value = max(max_values, key=lambda i: i['value'])
             max_value['datetime_end'] = max_value['datetime'] + td_window
             hours = td_window.days * 24 + td_window.seconds / 3600.0
-            t = herhalingstijd(hours, 25, max_value['value'])
+            t = herhalingstijd(hours, area_km2, max_value['value'])
         else:
             max_value = {'value': None, 'datetime': None, 'datetime_end': None}
             t = None
@@ -195,6 +308,7 @@ class RainAppAdapter(FewsJdbc):
         """
         Popup with graph - table - bargraph.
         """
+        logger.info('parameterkey: %s' % self.parameterkey)
         add_snippet = layout_options.get('add_snippet', False)
         if snippet_group:
             identifiers = [
@@ -232,6 +346,7 @@ class RainAppAdapter(FewsJdbc):
         for identifier in identifiers:
 
             values = self._cached_values(identifier, start_date, end_date)
+            area_km2 = meter_square_to_km_square(identifier['area_m2'])
 
             if snippet_group:
                 url_extra = ''
@@ -249,6 +364,7 @@ class RainAppAdapter(FewsJdbc):
                     self.workspace_item.name),
                 'location': self._get_location_name(identifier),
                 'table': [self.rain_stats(values,
+                                          area_km2,
                                           td_window,
                                           start_date,
                                           end_date)

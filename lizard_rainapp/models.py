@@ -8,7 +8,8 @@ from django.contrib.gis.db import models
 
 logger = logging.getLogger(__name__)
 
-class MunicipalityPolygon(models.Model):
+
+class GeoObject(models.Model):
     """Line elements from river shapefile."""
     municipality_id = models.CharField(max_length=16)
     name = models.CharField(max_length=128)
@@ -16,6 +17,18 @@ class MunicipalityPolygon(models.Model):
     x = models.FloatField()
     y = models.FloatField()
     area = models.FloatField() # In square meters
-    geom = models.GeometryField(srid=4326)
+    geometry = models.GeometryField(srid=4326)
     objects = models.GeoManager()
 
+    def __unicode__(self):
+        return self.name
+
+
+
+class RainValue(models.Model):
+    """RainData stored locally."""
+    geo_object = models.ForeignKey('GeoObject')
+    parameterkey = models.CharField(max_length=32)
+    unit = models.CharField(max_length=32)
+    datetime = models.DateTimeField()
+    value = models.FloatField()
