@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.5 (unreleased)
+0.5 (2011-09-15)
 ----------------
 
 - Added model MunicipalityPolygon.
