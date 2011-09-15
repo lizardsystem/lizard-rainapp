@@ -24,7 +24,6 @@ class GeoObject(models.Model):
         return self.name
 
 
-
 class RainValue(models.Model):
     """RainData stored locally."""
     geo_object = models.ForeignKey('GeoObject')
@@ -32,3 +31,9 @@ class RainValue(models.Model):
     unit = models.CharField(max_length=32)
     datetime = models.DateTimeField()
     value = models.FloatField()
+
+
+class CompleteRainValue(models.Model):
+    """Date and parameter for which a complete set of RainValues has been stored."""
+    parameterkey = models.CharField(max_length=32)
+    datetime = models.DateTimeField()

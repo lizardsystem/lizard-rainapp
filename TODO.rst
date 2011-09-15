@@ -2,6 +2,8 @@ TODO
 ====
 - adjust import recent data script to delete old data and put it in a cronjob.
 - have hover popup, and make it show for what time the coloring is
+- keep track of latest complete fews import, otherwise some shapes will not
+  display.
 
 - releasen van rainapp
 - releasen van mapdemo

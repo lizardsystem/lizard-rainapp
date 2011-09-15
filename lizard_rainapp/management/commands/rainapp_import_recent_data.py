@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from lizard_fewsjdbc.models import JdbcSource
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainValue
+from lizard_rainapp.models import CompleteRainValue
 
 import datetime
 import logging
@@ -64,7 +65,6 @@ def import_recent_data(datetime_ref):
 
         last_value_date[pid] = timeseries[-1]['time']
 
-
     for pid in pids:
 
         logger.info('Syncing data for parameter %s.' % pid)
@@ -81,8 +81,11 @@ def import_recent_data(datetime_ref):
             data = js.get_timeseries(**ts_kwargs)
 
             if not data:
-                logger.debug('no data for %s' % lid)
-                continue
+                # Put zero data since otherwise no shape is drawn for this
+                # location.
+                logger.debug('no data for %s, putting -1.' % lid)
+                data = [{'time': last_value_date[pid], 'value': -1}]
+                
 
             if len(data) > 1:
                 logger.debug('Ambiguous for parameter %s at location %s.' % (
@@ -105,10 +108,21 @@ def import_recent_data(datetime_ref):
             if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) / REPORT_GROUP_SIZE):
                 logger.info('synced %s values.' % (i + 1))
 
+        # After all data is received, a completerainvalueobject is stored, so
+        # that the 
+        completerainvalue = {
+            'parameterkey': pid,
+            'datetime': data[0]['time'].replace(tzinfo=None),
+        }
+            
+        if not CompleteRainValue.objects.filter(**completerainvalue).exists():
+            CompleteRainValue(**completerainvalue).save()
+
 
 def delete_older_data(datetime_threshold):
     """Delete any data older than datetime_threshold."""
     RainValue.objects.filter(datetime__lt=datetime_threshold).delete()
+    CompleteRainValue.objects.filter(datetime__lt=datetime_threshold).delete()
 
 
 class Command(BaseCommand):

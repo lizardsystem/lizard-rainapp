@@ -26,6 +26,22 @@ Changelog of lizard-rainapp
 - changed database setting in testsettings to postgis database, otherwise tests
   don't work.
 
+- Added script for creation of legend.
+
+- Modified html_popup to be able to show T < 1.
+
+- Modified fews import script to delete data older than 3 days, and to keep
+  track of completely imported sets (for the whole country), and to add a -1
+  value when there is no data.
+
+- Modified the legend creation script to incorporate -1 (no data).
+
+- Modified the layer so that it shows shapes if no recent values are available.
+
+- Added a model that keeps track of the available complete local rainvalues.
+
+- Added initial migration.
+
 
 0.4 (2011-09-07)
 ----------------

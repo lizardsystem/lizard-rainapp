@@ -23,6 +23,7 @@ from lizard_rainapp.calculations import moving_sum
 from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainValue
+from lizard_rainapp.models import CompleteRainValue
 
 from nens_graph.rainapp import RainappGraph
 
@@ -81,25 +82,34 @@ class RainAppAdapter(FewsJdbc):
 
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         rainapp_style = slc.mapnik_style()
-        maxdate = RainValue.objects.filter(
+        maxdate = CompleteRainValue.objects.filter(
             parameterkey=self.parameterkey).aggregate(
             md=Max('datetime'))['md']
-        maxdate_str = maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
 
-        query = """(
-            select
-                rav.value as value,
-                gob.geometry as geometry
-            from
-                lizard_rainapp_geoobject gob
-                join lizard_rainapp_rainvalue rav
-                on rav.geo_object_id = gob.id
-            where
-                rav.datetime = '%s' and
-                rav.parameterkey = '%s'
-        ) as data""" % (maxdate_str, self.parameterkey)
+        if maxdate is None:
+            # Color all shapes according to value -1
+            query = """(
+                select
+                    -1 as value,
+                    gob.geometry as geometry
+                from
+                    lizard_rainapp_geoobject gob
+            ) as data"""
+        else:
+            maxdate_str = maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
+            query = """(
+                select
+                    rav.value as value,
+                    gob.geometry as geometry
+                from
+                    lizard_rainapp_geoobject gob
+                    join lizard_rainapp_rainvalue rav
+                    on rav.geo_object_id = gob.id
+                where
+                    rav.datetime = '%s' and
+                    rav.parameterkey = '%s'
+            ) as data""" % (maxdate_str, self.parameterkey)
 
-        logger.debug(type(query))
         query = str(query)  # Seems mapnik or postgis don't like unicode?
 
         

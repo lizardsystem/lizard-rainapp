@@ -48,6 +48,8 @@ def replace_legend():
          'max_value':u'0.05', 'min_value':u'0.01'},
         {'color':'ffffff', 'index':9, 'label':u'>=0',
          'max_value':u'0.01', 'min_value':u'0'},
+        {'color':'000000', 'index':10, 'label':u'Geen data',
+         'max_value':u'-0.5', 'min_value':u'-1.5'},
     ]
 
     slsc_kwargs = {'shape_legend_class': slc}
