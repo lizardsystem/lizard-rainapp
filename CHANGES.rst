@@ -42,6 +42,8 @@ Changelog of lizard-rainapp
 
 - Added initial migration.
 
+- Modified hover popup to incorporate datestamp of coloring
+
 
 0.4 (2011-09-07)
 ----------------

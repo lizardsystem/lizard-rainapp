@@ -82,11 +82,11 @@ class RainAppAdapter(FewsJdbc):
 
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         rainapp_style = slc.mapnik_style()
-        maxdate = CompleteRainValue.objects.filter(
+        self.maxdate = CompleteRainValue.objects.filter(
             parameterkey=self.parameterkey).aggregate(
             md=Max('datetime'))['md']
 
-        if maxdate is None:
+        if self.maxdate is None:
             # Color all shapes according to value -1
             query = """(
                 select
@@ -96,7 +96,7 @@ class RainAppAdapter(FewsJdbc):
                     lizard_rainapp_geoobject gob
             ) as data"""
         else:
-            maxdate_str = maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
+            maxdate_str = self.maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
             query = """(
                 select
                     rav.value as value,
@@ -146,8 +146,6 @@ class RainAppAdapter(FewsJdbc):
         asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
         return asf.legend(updates)
         
-
-        
     def search(self, google_x, google_y, radius=None):
         """Search by coordinates, return matching items as list of dicts
         """
@@ -156,19 +154,19 @@ class RainAppAdapter(FewsJdbc):
         geo_objects = GeoObject.objects.filter(
             geometry__contains=rd_point_clicked)
 
-
         result = []
         for g in geo_objects:
+            maxdate = CompleteRainValue.objects.filter(
+                parameterkey=self.parameterkey).aggregate(
+                md=Max('datetime'))['md']
             identifier = {
                 'location': g.municipality_id,
-                'area_m2': g.geometry.area,
             }
             result.append({
                 'identifier': identifier,
                 'distance': 0,
                 'workspace_item': self.workspace_item,
-                # 'object': None,
-                'name': g.name,
+                'name': g.name + ' (' + str(maxdate) + ')',
                 'shortname': g.name,
                 'google_coords': (google_x, google_y),
             })
@@ -366,7 +364,9 @@ class RainAppAdapter(FewsJdbc):
         for identifier in identifiers:
 
             values = self._cached_values(identifier, start_date, end_date)
-            area_km2 = meter_square_to_km_square(identifier['area_m2'])
+            area_m2 = GeoObject.objects.get(
+                municipality_id=identifier['location']).geometry.area
+            area_km2 = meter_square_to_km_square(area_m2)
 
             period_summary_row = {
                 'td_window': 'periode',
