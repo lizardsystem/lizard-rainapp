@@ -106,10 +106,19 @@ def import_recent_data(datetime_ref):
                 logger.info('synced %s values.' % (i + 1))
 
 
+def delete_older_data(datetime_threshold):
+    """Delete any data older than datetime_threshold."""
+    RainValue.objects.filter(datetime__lt=datetime_threshold).delete()
+
+
 class Command(BaseCommand):
     args = ""
     help = "TODO"
 
     def handle(self, *args, **options):
-        datetime_ref = datetime.datetime.now()
-        import_recent_data(datetime_ref=datetime_ref)
+
+        now = datetime.datetime.now()
+        import_recent_data(datetime_ref=now)
+
+        datetime_threshold = now - datetime.timedelta(days=3)
+        delete_older_data(datetime_threshold)

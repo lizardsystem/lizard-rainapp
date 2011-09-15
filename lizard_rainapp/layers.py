@@ -35,7 +35,7 @@ UNIT_TO_TIMEDELTA = {
     'mm/5min': datetime.timedelta(minutes=5),
 }
 
-LEGEND_ID = 68
+LEGEND_DESCRIPTOR = 'Rainapp'
 
 
 class RainAppAdapter(FewsJdbc):
@@ -48,6 +48,15 @@ class RainAppAdapter(FewsJdbc):
         super(RainAppAdapter, self).__init__(
             *args, **kwargs)
 
+    def _t_to_string(self, t):
+        logger.debug(t)
+        if t is None:
+            return '-'
+        elif t >= 1:
+            return 'T = %i' % t
+        else:
+            return 'T < 1'
+    
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
         named_locations = self._locations()
@@ -70,7 +79,7 @@ class RainAppAdapter(FewsJdbc):
         # edge = mapnik.LineSymbolizer(mapnik.Color('#0000FF'), 1)
         # rainapp_rule.symbols.extend([fill, edge])
 
-        slc = ShapeLegendClass.objects.get(pk=LEGEND_ID)
+        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         rainapp_style = slc.mapnik_style()
         maxdate = RainValue.objects.filter(
             parameterkey=self.parameterkey).aggregate(
@@ -115,13 +124,14 @@ class RainAppAdapter(FewsJdbc):
         return layers, styles
 
     def legend(self, updates=None):
+        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         from lizard_shape.layers import AdapterShapefile
         la = {
             'layer_name': 'test',
             'resource_module': 'test',
             'resource_name': 'test',
             'legend_type': 'ShapeLegendClass',
-            'legend_id': LEGEND_ID
+            'legend_id': slc.id
         }
         asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
         return asf.legend(updates)
@@ -275,7 +285,7 @@ class RainAppAdapter(FewsJdbc):
                 'max': None,
                 'start': None,
                 'end': None,
-                't': None}
+                't': self._t_to_string(None)}
 
         # Make start_date and end_date tz aware
         start_date = start_date.replace(tzinfo=values[0]['datetime'].tzinfo)
@@ -302,7 +312,7 @@ class RainAppAdapter(FewsJdbc):
             'max': max_value['value'],
             'start': max_value['datetime'],
             'end': max_value['datetime_end'],
-            't': t}
+            't': self._t_to_string(t)}
 
     def html(self, snippet_group=None, identifiers=None, layout_options=None):
         """
@@ -348,6 +358,14 @@ class RainAppAdapter(FewsJdbc):
             values = self._cached_values(identifier, start_date, end_date)
             area_km2 = meter_square_to_km_square(identifier['area_m2'])
 
+            period_summary_row = {
+                'td_window': 'periode',
+                'max' : sum([v['value'] for v in values]),
+                'start': start_date,
+                'end': end_date,
+                't': self._t_to_string(None),
+            }
+
             if snippet_group:
                 url_extra = ''
             else:
@@ -363,6 +381,7 @@ class RainAppAdapter(FewsJdbc):
                     self._get_location_name(identifier),
                     self.workspace_item.name),
                 'location': self._get_location_name(identifier),
+                'period_summary_row': period_summary_row,
                 'table': [self.rain_stats(values,
                                           area_km2,
                                           td_window,
