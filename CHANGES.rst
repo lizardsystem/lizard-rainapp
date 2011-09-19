@@ -5,7 +5,10 @@ Changelog of lizard-rainapp
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removed the hardcoded fewsjdbc offset, since a new jdbc2ei corrected the
+  problem.
+
+- Changed a number o logger.debugs into logger.warns in the data import script.
 
 
 0.5 (2011-09-15)

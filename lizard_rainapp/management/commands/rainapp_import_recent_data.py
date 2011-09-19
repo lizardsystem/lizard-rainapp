@@ -15,7 +15,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 # The offset to add to get_timeseries dates to get the right dates back.
-FEWS_OFFSET = datetime.timedelta(hours=-2)
+# ^^^ Update: As of 2011-09-16, there is no offset anymore, so it can be set
+# to zero, and after some months removed.
+FEWS_OFFSET = datetime.timedelta(hours=0)
 INVESTIGATED_LOCATION = 'GEM_001'
 LOOK_BACK_PERIOD = {
     'P.radar.5m':datetime.timedelta(hours=6),
@@ -83,15 +85,15 @@ def import_recent_data(datetime_ref):
             if not data:
                 # Put zero data since otherwise no shape is drawn for this
                 # location.
-                logger.debug('no data for %s, putting -1.' % lid)
+                logger.warn('no data for %s, putting -1.' % lid)
                 data = [{'time': last_value_date[pid], 'value': -1}]
                 
 
             if len(data) > 1:
-                logger.debug('Ambiguous for parameter %s at location %s.' % (
+                logger.warn('Ambiguous for parameter %s at location %s.' % (
                               ts_kwargs['parameter_id'],
                               ts_kwargs['location_id']))
-                logger.debug('length of data: %s' % len(data))
+                logger.warn('length of data: %s' % len(data))
                 continue
 
             rainvalue = {
