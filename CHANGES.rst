@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.6 (unreleased)
-----------------
+0.5.1 (2011-09-19)
+------------------
 
 - Removed the hardcoded fewsjdbc offset, since a new jdbc2ei corrected the
   problem.
