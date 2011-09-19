@@ -20,15 +20,17 @@ logger = logging.getLogger(__name__)
 FEWS_OFFSET = datetime.timedelta(hours=0)
 INVESTIGATED_LOCATION = 'GEM_001'
 LOOK_BACK_PERIOD = {
-    'P.radar.5m':datetime.timedelta(hours=6),
-    'P.radar.1h':datetime.timedelta(hours=6),
-    'P.radar.3h':datetime.timedelta(hours=6),
-    'P.radar.24h':datetime.timedelta(hours=48),
+    'P.radar.5m': datetime.timedelta(hours=6),
+    'P.radar.1h': datetime.timedelta(hours=6),
+    'P.radar.3h': datetime.timedelta(hours=6),
+    'P.radar.24h': datetime.timedelta(hours=48),
 }
 REPORT_GROUP_SIZE = 50
 
+
 class NoDataError(Exception):
     pass
+
 
 def import_recent_data(datetime_ref):
     """Copy the rainvalues most recent to datetime_ref into local db."""
@@ -46,7 +48,7 @@ def import_recent_data(datetime_ref):
         'filter_id': fid,
         'parameter_id': p,
         'end_date': datetime_ref,
-        'location_id': INVESTIGATED_LOCATION
+        'location_id': INVESTIGATED_LOCATION,
     }
 
     last_value_date = {}
@@ -78,7 +80,7 @@ def import_recent_data(datetime_ref):
         })
         for i, lid in enumerate(lids):
             ts_kwargs.update({
-                'location_id': lid
+                'location_id': lid,
             })
             data = js.get_timeseries(**ts_kwargs)
 
@@ -87,7 +89,6 @@ def import_recent_data(datetime_ref):
                 # location.
                 logger.warn('no data for %s, putting -1.' % lid)
                 data = [{'time': last_value_date[pid], 'value': -1}]
-                
 
             if len(data) > 1:
                 logger.warn('Ambiguous for parameter %s at location %s.' % (
@@ -111,12 +112,12 @@ def import_recent_data(datetime_ref):
                 logger.info('synced %s values.' % (i + 1))
 
         # After all data is received, a completerainvalueobject is stored, so
-        # that the 
+        # that the
         completerainvalue = {
             'parameterkey': pid,
             'datetime': data[0]['time'].replace(tzinfo=None),
         }
-            
+
         if not CompleteRainValue.objects.filter(**completerainvalue).exists():
             CompleteRainValue(**completerainvalue).save()
 

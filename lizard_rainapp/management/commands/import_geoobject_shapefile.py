@@ -14,6 +14,7 @@ from lizard_rainapp.models import GeoObject
 
 logger = logging.getLogger(__name__)
 
+
 def load_shapefile():
     shapefile_filename = resource_filename('lizard_rainapp',
                                            'shape/gemeenten2009.shp')
@@ -21,7 +22,8 @@ def load_shapefile():
     # original_srs.ImportFromProj4(coordinates.RD)
     # target_srs = ogr.osr.SpatialReference()
     # target_srs.ImportFromEPSG(4326)
-    # coordinate_transformation = ogr.osr.CoordinateTransformation(original_srs, target_srs)
+    # coordinate_transformation = ogr.osr.CoordinateTransformation(
+    #     original_srs, target_srs)
 
     drv = ogr.GetDriverByName('ESRI Shapefile')
     source = drv.Open(shapefile_filename)
