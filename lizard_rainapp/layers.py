@@ -1,8 +1,10 @@
 from __future__ import division
 import datetime
+import locale
 import logging
 import iso8601
 import mapnik
+import pytz
 
 from django.db.models import Max
 from django.conf import settings
@@ -27,6 +29,15 @@ from lizard_rainapp.models import CompleteRainValue
 
 from nens_graph.rainapp import RainappGraph
 
+# Requires correct locale be generated on the server.
+# On ubuntu: check with locale -a
+# On ubuntu: sudo locale-gen nl_NL.utf8
+try:
+    locale.setlocale(locale.LC_TIME, 'nl_NL.UTF8')
+except locale.Error:
+    logger.debug('No locale nl_NL.UTF8 on this os. Using default locale.')
+
+
 logger = logging.getLogger(__name__)
 
 UNIT_TO_TIMEDELTA = {
@@ -37,6 +48,7 @@ UNIT_TO_TIMEDELTA = {
 }
 
 LEGEND_DESCRIPTOR = 'Rainapp'
+UTC = pytz.timezone('UTC')
 
 
 class RainAppAdapter(FewsJdbc):
@@ -48,6 +60,22 @@ class RainAppAdapter(FewsJdbc):
     def __init__(self, *args, **kwargs):
         super(RainAppAdapter, self).__init__(
             *args, **kwargs)
+
+        self.tz = pytz.timezone(settings.TIME_ZONE)
+
+    def _to_utc(self, *datetimes):
+        """Convert datetimes to UTC."""
+        datetimes_utc = []
+        
+        for d in datetimes:
+            if d.tzinfo is None:
+                datetimes_utc.append(self.tz.localize(d).astimezone(UTC))
+            else:
+                datetime_utc.append(d.astimezone(UTC))
+
+        if len(datetimes) > 1:
+            return datetimes_utc
+        return datetimes_utc[0]
 
     def _t_to_string(self, t):
         logger.debug(t)
@@ -159,6 +187,17 @@ class RainAppAdapter(FewsJdbc):
             maxdate = CompleteRainValue.objects.filter(
                 parameterkey=self.parameterkey).aggregate(
                 md=Max('datetime'))['md']
+            if maxdate is not None:
+                # If there is a maxdate, there must be a value at that date, 
+                # the import script should take care of that.
+                value = g.rainvalue_set.get(datetime=maxdate,
+                    parameterkey=self.parameterkey).value
+                popup_text = '%s: %.1f mm (%s)' % (
+                    g.name,
+                    value,
+                    maxdate.strftime('%d %b, %H:%M'))
+            else:
+                popup_text = '%s (Geen data)' % g.name
             identifier = {
                 'location': g.municipality_id,
             }
@@ -166,7 +205,8 @@ class RainAppAdapter(FewsJdbc):
                 'identifier': identifier,
                 'distance': 0,
                 'workspace_item': self.workspace_item,
-                'name': g.name + ' (' + str(maxdate) + ')',
+                # 'name': g.name + ' (' + str(maxdate) + ')',
+                'name': popup_text, 
                 'shortname': g.name,
                 'google_coords': (google_x, google_y),
             })
@@ -183,17 +223,17 @@ class RainAppAdapter(FewsJdbc):
               layout_extra=None):
         """Return png image data for barchart."""
         today = datetime.datetime.now()
-        graph = RainappGraph(start_date, end_date,
-                      width=width, height=height, today=today)
+        start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
+        graph = RainappGraph(start_date_utc, end_date_utc,
+                      width=width, height=height, today=today, tz=self.tz)
         # Gets timeseries, draws the bars, sets  the legend
         for identifier in identifiers:
             location_name = self._get_location_name(identifier)
             cached_value_result = self._cached_values(identifier,
-                                                      start_date,
-                                                      end_date)
-            dates_notz = [row['datetime'].replace(tzinfo=None)
-                          for row in cached_value_result]
-
+                                                      start_date_utc,
+                                                      end_date_utc)
+            dates_site_tz = [row['datetime'].astimezone(self.tz)
+                         for row in cached_value_result]
             values = [row['value'] for row in cached_value_result]
             units = [row['unit'] for row in cached_value_result]
             unit = ''
@@ -205,11 +245,11 @@ class RainAppAdapter(FewsJdbc):
                     # We can draw bars corresponding to period
                     bar_width = graph.get_bar_width(unit_timedelta)
                     offset = -1 * unit_timedelta
-                    offset_dates = [d + offset for d in dates_notz]
+                    offset_dates = [d + offset for d in dates_site_tz]
                 else:
                     # We can only draw spikes.
                     bar_width = 0
-                    offset_dates = dates_notz
+                    offset_dates = dates_local
                 graph.axes.bar(offset_dates,
                                values,
                                edgecolor='blue',
@@ -231,7 +271,8 @@ class RainAppAdapter(FewsJdbc):
         Same as self.values, but cached.
 
         The stored values are rounded in days, a 'little bit
-        more'. Else the cache will always miss.
+        more'. Else the cache will always miss. Expects and returns UTC
+        datetimes, with or without tzinfo
         """
         start_date_cache = datetime.datetime(
             start_date.year, start_date.month, start_date.day)
@@ -279,14 +320,18 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def rain_stats(self, values, area_km2, td_window, start_date, end_date):
-        """
-        Calculate stats.
+    def rain_stats(self,
+                   values,
+                   area_km2,
+                   td_window,
+                   start_date_utc,
+                   end_date_utc):
+        """Calculate stats.
 
-        """
+        Expects utc, returns site timezone datetimes... Sorry."""
         logger.debug(('Calculating rain stats for' +
                       'start=%s, end=%s, td_window=%s') %
-                     (start_date, end_date, td_window))
+                     (start_date_utc, end_date_utc, td_window))
         if not values:
             return {
                 'td_window': td_window,
@@ -295,31 +340,40 @@ class RainAppAdapter(FewsJdbc):
                 'end': None,
                 't': self._t_to_string(None)}
 
-        # Make start_date and end_date tz aware
-        start_date = start_date.replace(tzinfo=values[0]['datetime'].tzinfo)
-        end_date = end_date.replace(tzinfo=values[0]['datetime'].tzinfo)
-
         td_value = UNIT_TO_TIMEDELTA[values[0]['unit']]
         max_values = moving_sum(values,
                                 td_window,
                                 td_value,
-                                start_date,
-                                end_date)
+                                start_date_utc,
+                                end_date_utc)
 
         if max_values:
             max_value = max(max_values, key=lambda i: i['value'])
-            max_value['datetime_end'] = max_value['datetime'] + td_window
+
             hours = td_window.days * 24 + td_window.seconds / 3600.0
             t = herhalingstijd(hours, area_km2, max_value['value'])
         else:
-            max_value = {'value': None, 'datetime': None, 'datetime_end': None}
+            max_value = {'value': None,
+                         'datetime_start_utc': None,
+                         'datetime_end_utc': None}
             t = None
+
+        if max_value['datetime_start_utc'] is not None:
+            datetime_start_site_tz = max_value[
+                'datetime_start_utc'].astimezone(self.tz)
+        else:
+            datetime_start_site_tz = None
+        if max_value['datetime_end_utc'] is not None:
+            datetime_end_site_tz = max_value[
+                'datetime_end_utc'].astimezone(self.tz)
+        else:
+            datetime_end_site_tz = None
 
         return {
             'td_window': td_window,
             'max': max_value['value'],
-            'start': max_value['datetime'],
-            'end': max_value['datetime_end'],
+            'start': datetime_start_site_tz,
+            'end': datetime_end_site_tz,
             't': self._t_to_string(t)}
 
     def html(self, snippet_group=None, identifiers=None, layout_options=None):
@@ -340,6 +394,9 @@ class RainAppAdapter(FewsJdbc):
         # Layer options contain request - not the best way but it works.
         start_date, end_date = current_start_end_dates(
             layout_options['request'])
+
+        # Convert start and end dates to utc.
+        start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
 
         td_windows = [datetime.timedelta(days=2),
                       datetime.timedelta(days=1),
@@ -363,7 +420,10 @@ class RainAppAdapter(FewsJdbc):
 
         for identifier in identifiers:
 
-            values = self._cached_values(identifier, start_date, end_date)
+            values = self._cached_values(identifier,
+                                         start_date_utc,
+                                         end_date_utc)
+
             area_m2 = GeoObject.objects.get(
                 municipality_id=identifier['location']).geometry.area
             area_km2 = meter_square_to_km_square(area_m2)
@@ -395,8 +455,8 @@ class RainAppAdapter(FewsJdbc):
                 'table': [self.rain_stats(values,
                                           area_km2,
                                           td_window,
-                                          start_date,
-                                          end_date)
+                                          start_date_utc,
+                                          end_date_utc)
                           for td_window in td_windows],
                 'image_url': image_url_base + url_extra,
             })

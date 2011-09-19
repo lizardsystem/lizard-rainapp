@@ -47,7 +47,7 @@ def herhalingstijd(bui_duur, oppervlak, neerslag_som):
         -(1 - (neerslag_som - loc) * (vorm / schaal)) ** (1 / vorm)))), 0)
 
 
-def moving_sum(values, td_window, td_value, start_date, end_date):
+def moving_sum(values, td_window, td_value, start_date_utc, end_date_utc):
     """Return list of summed values in window of td_window.
 
     Requires len(values) > 0."""
@@ -55,7 +55,8 @@ def moving_sum(values, td_window, td_value, start_date, end_date):
 
     # End_date often ends with 23:59:59, we want to include at
     # least 1 day in case td_window=1 day, thus the 2 seconds.
-    window_start_last = end_date - td_window + datetime.timedelta(seconds=2)
+    window_start_last = (end_date_utc - td_window +
+                         datetime.timedelta(seconds=2))
 
     # Calculate start of first window based on td_value. The whole timespan to
     # which the first value which hypothetically could be as the start_date
@@ -63,38 +64,28 @@ def moving_sum(values, td_window, td_value, start_date, end_date):
     # window_increment is also based on td_value
     if (td_value.days == 1):
         # 24 hour data, fix to hour and subtract td_value
-        window_start = datetime.datetime(
-            year=start_date.year,
-            month=start_date.month,
-            day=start_date.day,
-            hour=0,
-            tzinfo=start_date.tzinfo,
-        ) - td_value
+        window_start = start_date_utc.replace(hour=0,
+                                              minute=0,
+                                              second=0,
+                                              microsecond=0) - td_value
         # It is not known in advance at which hour of day the 24 hour data
         # is stored, so the window advances by hour and not by 24 hours
         window_increment = datetime.timedelta(hours=1)
     elif (td_value.seconds == 3600):
         window_increment = td_value
         # 1 hour data, fix to hour and subtract td_value
-        window_start = datetime.datetime(
-            year=start_date.year,
-            month=start_date.month,
-            day=start_date.day,
-            hour=0,
-            tzinfo=start_date.tzinfo,
-        ) - td_value
+        window_start = start_date_utc.replace(hour=0,
+                                              minute=0,
+                                              second=0,
+                                              microsecond=0) - td_value
     elif (td_value.seconds == 300):
-        # 5 minute data, fix to whole five minutes before startdate
         window_increment = td_value
-        window_start = datetime.datetime(
-            year=start_date.year,
-            month=start_date.month,
-            day=start_date.day,
-            hour=start_date.hour,
-            minute=5 * int(start_date.minute / 5),
-            tzinfo=start_date.tzinfo,
-        )
-
+        # 5 minute data, fix to whole five minutes before startdate
+        window_start = start_date_utc.replace(hour=0,
+                                              minute=5 * int(
+                                                start_date_utc.minute / 5),
+                                              second=0,
+                                              microsecond=0) - td_value
     # Fast way to calculate sum values.
     len_values = len(values)
     min_index, max_index = 0, -1  # Nothing todo with backwards indexing...
@@ -135,7 +126,8 @@ def moving_sum(values, td_window, td_value, start_date, end_date):
         if max_index >= min_index:
             max_values.append({
                     'value': sum_values,
-                    'datetime': window_start,
+                    'datetime_start_utc': window_start,
+                    'datetime_end_utc': window_end,
             })
 
         window_start += window_increment

@@ -5,7 +5,11 @@ Changelog of lizard-rainapp
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Changed legend to include value and meaningful no data message if no data.
+
+- Made layer display popup and graph and stats in site timezone instead of UTC.
+
+- Fixed tests
 
 
 0.5.1 (2011-09-19)
