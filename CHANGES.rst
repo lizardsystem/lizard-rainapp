@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.6 (unreleased)
-----------------
+0.5.2 (2011-09-20)
+------------------
 
 - Changed legend to include value and meaningful no data message if no data.
 
