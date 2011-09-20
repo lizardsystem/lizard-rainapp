@@ -16,7 +16,7 @@ class GeoObject(models.Model):
     code = models.CharField(max_length=16, null=True)
     x = models.FloatField()
     y = models.FloatField()
-    area = models.FloatField() # In square meters
+    area = models.FloatField()  # In square meters
     geometry = models.GeometryField(srid=4326)
     objects = models.GeoManager()
 
@@ -25,7 +25,7 @@ class GeoObject(models.Model):
 
 
 class RainValue(models.Model):
-    """RainData stored locally."""
+    """RainData stored locally. datetime is copied from fews datetime."""
     geo_object = models.ForeignKey('GeoObject')
     parameterkey = models.CharField(max_length=32)
     unit = models.CharField(max_length=32)
@@ -34,6 +34,7 @@ class RainValue(models.Model):
 
 
 class CompleteRainValue(models.Model):
-    """Date and parameter for which a complete set of RainValues has been stored."""
+    """Date and parameter for which a complete set of RainValues
+    has been stored. Again, datetime is copied from fews datetime."""
     parameterkey = models.CharField(max_length=32)
     datetime = models.DateTimeField()

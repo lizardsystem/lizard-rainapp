@@ -66,7 +66,7 @@ class RainAppAdapter(FewsJdbc):
     def _to_utc(self, *datetimes):
         """Convert datetimes to UTC."""
         datetimes_utc = []
-        
+
         for d in datetimes:
             if d.tzinfo is None:
                 datetimes_utc.append(self.tz.localize(d).astimezone(UTC))
@@ -85,7 +85,7 @@ class RainAppAdapter(FewsJdbc):
             return 'T = %i' % t
         else:
             return 'T < 1'
-    
+
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
         named_locations = self._locations()
@@ -96,7 +96,6 @@ class RainAppAdapter(FewsJdbc):
 
         return location_name
 
-    
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
 
@@ -140,7 +139,6 @@ class RainAppAdapter(FewsJdbc):
 
         query = str(query)  # Seems mapnik or postgis don't like unicode?
 
-        
         default_database = settings.DATABASES['default']
         datasource = mapnik.PostGIS(
             host=default_database['HOST'],
@@ -155,7 +153,7 @@ class RainAppAdapter(FewsJdbc):
         layer.datasource = datasource
 
         layer.styles.append('RainappStyle')
-        
+
         styles = {'RainappStyle': rainapp_style}
         layers = [layer]
 
@@ -169,11 +167,11 @@ class RainAppAdapter(FewsJdbc):
             'resource_module': 'test',
             'resource_name': 'test',
             'legend_type': 'ShapeLegendClass',
-            'legend_id': slc.id
+            'legend_id': slc.id,
         }
         asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
         return asf.legend(updates)
-        
+
     def search(self, google_x, google_y, radius=None):
         """Search by coordinates, return matching items as list of dicts
         """
@@ -188,7 +186,7 @@ class RainAppAdapter(FewsJdbc):
                 parameterkey=self.parameterkey).aggregate(
                 md=Max('datetime'))['md']
             if maxdate is not None:
-                # If there is a maxdate, there must be a value at that date, 
+                # If there is a maxdate, there must be a value at that date,
                 # the import script should take care of that.
                 value = g.rainvalue_set.get(datetime=maxdate,
                     parameterkey=self.parameterkey).value
@@ -206,11 +204,10 @@ class RainAppAdapter(FewsJdbc):
                 'distance': 0,
                 'workspace_item': self.workspace_item,
                 # 'name': g.name + ' (' + str(maxdate) + ')',
-                'name': popup_text, 
+                'name': popup_text,
                 'shortname': g.name,
                 'google_coords': (google_x, google_y),
             })
-            
 
         return result
 
@@ -430,7 +427,7 @@ class RainAppAdapter(FewsJdbc):
 
             period_summary_row = {
                 'td_window': 'periode',
-                'max' : sum([v['value'] for v in values]),
+                'max': sum([v['value'] for v in values]),
                 'start': start_date,
                 'end': end_date,
                 't': self._t_to_string(None),
