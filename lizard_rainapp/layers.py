@@ -24,10 +24,11 @@ from lizard_rainapp.calculations import herhalingstijd
 from lizard_rainapp.calculations import moving_sum
 from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.models import GeoObject
-from lizard_rainapp.models import RainValue
 from lizard_rainapp.models import CompleteRainValue
 
 from nens_graph.rainapp import RainappGraph
+
+logger = logging.getLogger(__name__)
 
 # Requires correct locale be generated on the server.
 # On ubuntu: check with locale -a
@@ -36,9 +37,6 @@ try:
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF8')
 except locale.Error:
     logger.debug('No locale nl_NL.UTF8 on this os. Using default locale.')
-
-
-logger = logging.getLogger(__name__)
 
 UNIT_TO_TIMEDELTA = {
     'mm/24hr': datetime.timedelta(hours=24),
@@ -71,7 +69,7 @@ class RainAppAdapter(FewsJdbc):
             if d.tzinfo is None:
                 datetimes_utc.append(self.tz.localize(d).astimezone(UTC))
             else:
-                datetime_utc.append(d.astimezone(UTC))
+                datetimes_utc.append(d.astimezone(UTC))
 
         if len(datetimes) > 1:
             return datetimes_utc
@@ -246,7 +244,7 @@ class RainAppAdapter(FewsJdbc):
                 else:
                     # We can only draw spikes.
                     bar_width = 0
-                    offset_dates = dates_local
+                    offset_dates = dates_site_tz
                 graph.axes.bar(offset_dates,
                                values,
                                edgecolor='blue',
