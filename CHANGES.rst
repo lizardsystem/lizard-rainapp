@@ -9,7 +9,9 @@ Changelog of lizard-rainapp
 
 - Made layer display popup and graph and stats in site timezone instead of UTC.
 
-- Fixed tests
+- Fixed tests.
+
+- Pinned latest nens-graph.
 
 
 0.5.1 (2011-09-19)
