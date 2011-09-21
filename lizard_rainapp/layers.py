@@ -218,10 +218,15 @@ class RainAppAdapter(FewsJdbc):
               height,
               layout_extra=None):
         """Return png image data for barchart."""
-        today = datetime.datetime.now()
+        today_site_tz = self.tz.localize(datetime.datetime.now())
         start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
-        graph = RainappGraph(start_date_utc, end_date_utc,
-                      width=width, height=height, today=today, tz=self.tz)
+        graph = RainappGraph(start_date_utc,
+                             end_date_utc,
+                             width=width,
+                             height=height,
+                             today=today_site_tz,
+                             tz=self.tz)
+
         # Gets timeseries, draws the bars, sets  the legend
         for identifier in identifiers:
             location_name = self._get_location_name(identifier)

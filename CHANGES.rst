@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Today line in graph now shows correct time in correct timezone.
 
 
 0.5.2 (2011-09-20)
