@@ -1,6 +1,13 @@
 TODO
 ====
 
+In management script:
+    - lower warn level to debug.
+    - first test for existence of value, then go to fews. So 24 hour values are
+      not fetched every time
+    - add other value for fewsconnection error (-2)
+    - in hover, show the reason for the error (no data, or connection error)
+
 If I select a 2 day period, there should be a herhalingstijd for 2 days.
 
 Window can be outside selected period, one may feel betrayed by that. Discuss.
