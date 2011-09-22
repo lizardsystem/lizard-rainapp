@@ -11,6 +11,7 @@ from lizard_rainapp.models import CompleteRainValue
 
 import datetime
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,12 @@ def import_recent_data(datetime_ref):
             ts_kwargs.update({
                 'location_id': lid,
             })
-            data = js.get_timeseries(**ts_kwargs)
+
+            try:
+                data = js.get_timeseries(**ts_kwargs)
+            except:
+                logger.warn('Error getting timeseries: %s' % sys.exc_info()[0])
+                data = []
 
             if not data:
                 # Put zero data since otherwise no shape is drawn for this

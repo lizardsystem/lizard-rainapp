@@ -183,10 +183,10 @@ class RainAppAdapter(FewsJdbc):
             maxdate = CompleteRainValue.objects.filter(
                 parameterkey=self.parameterkey).aggregate(
                 md=Max('datetime'))['md']
-            maxdate_site_tz = UTC.localize(maxdate).astimezone(self.tz)
             if maxdate is not None:
                 # If there is a maxdate, there must be a value at that date,
                 # the import script should take care of that.
+                maxdate_site_tz = UTC.localize(maxdate).astimezone(self.tz)
                 value = g.rainvalue_set.get(datetime=maxdate,
                     parameterkey=self.parameterkey).value
                 popup_text = '%s: %.1f mm (%s)' % (

@@ -7,6 +7,10 @@ Changelog of lizard-rainapp
 
 - Today line in graph now shows correct time in correct timezone.
 
+- Fixed bug where no graph was shown when no coloring data is available.
+
+- Added error checking in data import script.
+
 
 0.5.2 (2011-09-20)
 ------------------
