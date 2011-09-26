@@ -50,7 +50,7 @@ def replace_legend():
         {'color':'ffffff', 'index':9, 'label':u'>=0',
          'max_value':u'5', 'min_value':u'0'},
         {'color':'000000', 'index':10, 'label':u'Geen data',
-         'max_value':u'-0.5', 'min_value':u'-1.5'},
+         'max_value':u'-0.5', 'min_value':u'-3.5'},
     ]
 
     legend_props = [

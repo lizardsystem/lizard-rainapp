@@ -5,7 +5,11 @@ Changelog of lizard-rainapp
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removed warning level logging, putting negative precipitation values instead;
+  to prevent overly cluttering of Sentry.
+
+- Improved import recent data import script, so that it only queries fews when
+  it is really needed.
 
 
 0.5.3 (2011-09-22)

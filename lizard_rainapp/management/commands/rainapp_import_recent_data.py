@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 # The offset to add to get_timeseries dates to get the right dates back.
 # ^^^ Update: As of 2011-09-16, there is no offset anymore, so it can be set
 # to zero, and after some months removed.
-FEWS_OFFSET = datetime.timedelta(hours=0)
 INVESTIGATED_LOCATION = 'GEM_001'
 LOOK_BACK_PERIOD = {
     'P.radar.5m': datetime.timedelta(hours=6),
@@ -68,69 +67,76 @@ def import_recent_data(datetime_ref):
                               ts_kwargs['parameter_id'],
                               ts_kwargs['location_id']))
 
-        last_value_date[pid] = timeseries[-1]['time']
+        last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
 
     for pid in pids:
 
-        logger.info('Syncing data for parameter %s.' % pid)
         unit = js.get_unit(pid)
         ts_kwargs.update({
             'parameter_id': pid,
-            'start_date': last_value_date[pid] + FEWS_OFFSET,
-            'end_date': last_value_date[pid] + FEWS_OFFSET,
+            'start_date': last_value_date[pid],
+            'end_date': last_value_date[pid],
         })
-        for i, lid in enumerate(lids):
-            ts_kwargs.update({
-                'location_id': lid,
-            })
 
-            try:
-                data = js.get_timeseries(**ts_kwargs)
-            except:
-                logger.warn('Error getting timeseries: %s' % sys.exc_info()[0])
-                data = []
-
-            if not data:
-                # Put zero data since otherwise no shape is drawn for this
-                # location.
-                logger.warn('no data for %s, putting -1.' % lid)
-                data = [{'time': last_value_date[pid], 'value': -1}]
-
-            if len(data) > 1:
-                logger.warn('Ambiguous for parameter %s at location %s.' % (
-                              ts_kwargs['parameter_id'],
-                              ts_kwargs['location_id']))
-                logger.warn('length of data: %s' % len(data))
-                continue
-
-            rainvalue = {
-                'geo_object': GeoObject.objects.get(municipality_id=lid),
-                'parameterkey': pid,
-                'unit': unit,
-                'datetime': data[0]['time'].replace(tzinfo=None),
-                'value': data[0]['value'],
-            }
-
-            if not RainValue.objects.filter(**rainvalue).exists():
-                RainValue(**rainvalue).save()
-
-            if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) / REPORT_GROUP_SIZE):
-                logger.info('synced %s values.' % (i + 1))
-
-        # After all data is received, a completerainvalueobject is stored, so
-        # that the
         completerainvalue = {
             'parameterkey': pid,
-            'datetime': data[0]['time'].replace(tzinfo=None),
+            'datetime': last_value_date[pid],
         }
 
+        # Only do the import if it hasn't been done yet
         if not CompleteRainValue.objects.filter(**completerainvalue).exists():
+
+            logger.info('Syncing data for parameter %s.' % pid)
+            for i, lid in enumerate(lids):
+                ts_kwargs.update({
+                    'location_id': lid,
+                })
+
+                try:
+                    data = js.get_timeseries(**ts_kwargs)
+                except:
+                    error_type = sys.exc_info()[0]
+                    info_str = ('Error getting timeseries for %s. The error ' +
+                                    'was %s; putting -2.') % (lid, error_type)
+                    logger.info(info_str)
+                    data = [{'time': last_value_date[pid], 'value': -2}]
+
+                if not data:
+                    logger.info('no data for %s, putting -1.' % lid)
+                    data = [{'time': last_value_date[pid], 'value': -1}]
+
+                if len(data) > 1:
+                    info_str = ('Ambiguous data for parameter %s at location ' +
+                                   '%s. Putting -3.') % (pid, lid)
+                    logger.info(info_str)
+                    data = [{'time': last_value_date[pid], 'value': -3}]
+
+                rainvalue = {
+                    'geo_object': GeoObject.objects.get(municipality_id=lid),
+                    'parameterkey': pid,
+                    'unit': unit,
+                    'datetime': data[0]['time'].replace(tzinfo=None),
+                    'value': data[0]['value'],
+                }
+
+                if not RainValue.objects.filter(**rainvalue).exists():
+                    RainValue(**rainvalue).save()
+
+                if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) / REPORT_GROUP_SIZE):
+                    logger.info('synced %s values.' % (i + 1))
+
+            # After all data is received, a completerainvalueobject is stored, to
+            # indicate to other code that the rainvalues for this datetime can be
+            # used.
             CompleteRainValue(**completerainvalue).save()
 
 
 def delete_older_data(datetime_threshold):
     """Delete any data older than datetime_threshold."""
-    RainValue.objects.filter(datetime__lt=datetime_threshold).delete()
+
+    outdated_rvs = RainValue.objects.filter(datetime__lt=datetime_threshold)
+    logger.info('Deleting %s old rainvalue objects.' % outdated_rvs.count())
+    outdated_rvs.delete()
     CompleteRainValue.objects.filter(datetime__lt=datetime_threshold).delete()
 
 
@@ -141,7 +147,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         now = datetime.datetime.now()
-        import_recent_data(datetime_ref=now)
 
         datetime_threshold = now - datetime.timedelta(days=3)
-        delete_older_data(datetime_threshold)
+        delete_older_data(datetime_threshold=datetime_threshold)
+
+        import_recent_data(datetime_ref=now)
+

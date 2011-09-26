@@ -185,14 +185,22 @@ class RainAppAdapter(FewsJdbc):
                 md=Max('datetime'))['md']
             if maxdate is not None:
                 # If there is a maxdate, there must be a value at that date,
-                # the import script should take care of that.
+                # the import script should take care of that. However, it can be
+                # a negative value, which is actually a statuscode.
                 maxdate_site_tz = UTC.localize(maxdate).astimezone(self.tz)
+                # import pdb;pdb.set_trace()
                 value = g.rainvalue_set.get(datetime=maxdate,
                     parameterkey=self.parameterkey).value
-                popup_text = '%s: %.1f mm (%s)' % (
-                    g.name,
-                    value,
-                    maxdate_site_tz.strftime('%d %b, %H:%M'))
+                if value > -0.5:
+                    popup_text = '%s: %.1f mm (%s)' % (
+                        g.name,
+                        value,
+                        maxdate_site_tz.strftime('%d %b, %H:%M'))
+                else:
+                    popup_text = '%s: Geen data; code %i (%s)' % (
+                        g.name,
+                        value,
+                        maxdate_site_tz.strftime('%d %b, %H:%M'))
             else:
                 popup_text = '%s (Geen data)' % g.name
             identifier = {
