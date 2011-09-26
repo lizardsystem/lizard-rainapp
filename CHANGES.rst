@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.6 (unreleased)
-----------------
+0.5.4 (2011-09-26)
+------------------
 
 - Removed warning level logging, putting negative precipitation values instead;
   to prevent overly cluttering of Sentry.
