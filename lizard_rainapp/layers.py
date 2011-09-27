@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 import datetime
 import locale
@@ -79,10 +80,10 @@ class RainAppAdapter(FewsJdbc):
         logger.debug(t)
         if t is None:
             return '-'
-        elif t >= 1:
+        elif t > 1:
             return 'T = %i' % t
         else:
-            return 'T < 1'
+            return 'T ≤ 1'
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""

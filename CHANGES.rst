@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Adjusted statistics table so it reads T ≤ 1 if appropriate.
 
 
 0.5.4 (2011-09-26)
