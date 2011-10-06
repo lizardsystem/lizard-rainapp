@@ -95,81 +95,84 @@ class RainAppAdapter(FewsJdbc):
 
         return location_name
 
-    def layer(self, *args, **kwargs):
-        """Return mapnik layers and styles."""
+# Commented layer and legend below temporarily because we don't want shapes
+# until they can be animated - Arjan Verkerk 2011-10-06
 
-        # rainapp_rule = mapnik.Rule()
-        # rainapp_rule.set_else(True)
-        # rainapp_rule.filter = mapnik.Filter("[value] > 0 and [value] < 0.2")
-        # TODO use the legend class and use the layers from the legend.
-        # fill = mapnik.PolygonSymbolizer(mapnik.Color('#7F7FFF'))
-        # edge = mapnik.LineSymbolizer(mapnik.Color('#0000FF'), 1)
-        # rainapp_rule.symbols.extend([fill, edge])
+#   def layer(self, *args, **kwargs):
+#       """Return mapnik layers and styles."""
 
-        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
-        rainapp_style = slc.mapnik_style()
-        self.maxdate = CompleteRainValue.objects.filter(
-            parameterkey=self.parameterkey).aggregate(
-            md=Max('datetime'))['md']
+#       # rainapp_rule = mapnik.Rule()
+#       # rainapp_rule.set_else(True)
+#       # rainapp_rule.filter = mapnik.Filter("[value] > 0 and [value] < 0.2")
+#       # TODO use the legend class and use the layers from the legend.
+#       # fill = mapnik.PolygonSymbolizer(mapnik.Color('#7F7FFF'))
+#       # edge = mapnik.LineSymbolizer(mapnik.Color('#0000FF'), 1)
+#       # rainapp_rule.symbols.extend([fill, edge])
 
-        if self.maxdate is None:
-            # Color all shapes according to value -1
-            query = """(
-                select
-                    -1 as value,
-                    gob.geometry as geometry
-                from
-                    lizard_rainapp_geoobject gob
-            ) as data"""
-        else:
-            maxdate_str = self.maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
-            query = """(
-                select
-                    rav.value as value,
-                    gob.geometry as geometry
-                from
-                    lizard_rainapp_geoobject gob
-                    join lizard_rainapp_rainvalue rav
-                    on rav.geo_object_id = gob.id
-                where
-                    rav.datetime = '%s' and
-                    rav.parameterkey = '%s'
-            ) as data""" % (maxdate_str, self.parameterkey)
+#       slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
+#       rainapp_style = slc.mapnik_style()
+#       self.maxdate = CompleteRainValue.objects.filter(
+#           parameterkey=self.parameterkey).aggregate(
+#           md=Max('datetime'))['md']
 
-        query = str(query)  # Seems mapnik or postgis don't like unicode?
+#       if self.maxdate is None:
+#           # Color all shapes according to value -1
+#           query = """(
+#               select
+#                   -1 as value,
+#                   gob.geometry as geometry
+#               from
+#                   lizard_rainapp_geoobject gob
+#           ) as data"""
+#       else:
+#           maxdate_str = self.maxdate.strftime('%Y-%m-%d %H:%M:%S+02')
+#           query = """(
+#               select
+#                   rav.value as value,
+#                   gob.geometry as geometry
+#               from
+#                   lizard_rainapp_geoobject gob
+#                   join lizard_rainapp_rainvalue rav
+#                   on rav.geo_object_id = gob.id
+#               where
+#                   rav.datetime = '%s' and
+#                   rav.parameterkey = '%s'
+#           ) as data""" % (maxdate_str, self.parameterkey)
 
-        default_database = settings.DATABASES['default']
-        datasource = mapnik.PostGIS(
-            host=default_database['HOST'],
-            user=default_database['USER'],
-            password=default_database['PASSWORD'],
-            dbname=default_database['NAME'],
-            table=query,
-            geometry_field='geometry',
-        )
+#       query = str(query)  # Seems mapnik or postgis don't like unicode?
 
-        layer = mapnik.Layer("Gemeenten", RD)
-        layer.datasource = datasource
+#       default_database = settings.DATABASES['default']
+#       datasource = mapnik.PostGIS(
+#           host=default_database['HOST'],
+#           user=default_database['USER'],
+#           password=default_database['PASSWORD'],
+#           dbname=default_database['NAME'],
+#           table=query,
+#           geometry_field='geometry',
+#       )
 
-        layer.styles.append('RainappStyle')
+#       layer = mapnik.Layer("Gemeenten", RD)
+#       layer.datasource = datasource
 
-        styles = {'RainappStyle': rainapp_style}
-        layers = [layer]
+#       layer.styles.append('RainappStyle')
 
-        return layers, styles
+#       styles = {'RainappStyle': rainapp_style}
+#       layers = [layer]
 
-    def legend(self, updates=None):
-        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
-        from lizard_shape.layers import AdapterShapefile
-        la = {
-            'layer_name': 'test',
-            'resource_module': 'test',
-            'resource_name': 'test',
-            'legend_type': 'ShapeLegendClass',
-            'legend_id': slc.id,
-        }
-        asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
-        return asf.legend(updates)
+#       return layers, styles
+
+#   def legend(self, updates=None):
+#       slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
+#       from lizard_shape.layers import AdapterShapefile
+#       la = {
+#           'layer_name': 'test',
+#           'resource_module': 'test',
+#           'resource_name': 'test',
+#           'legend_type': 'ShapeLegendClass',
+#           'legend_id': slc.id,
+#       }
+#       asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
+#       return asf.legend(updates)
 
     def search(self, google_x, google_y, radius=None):
         """Search by coordinates, return matching items as list of dicts
