@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.6 (unreleased)
-----------------
+0.5.6 (2011-10-06)
+------------------
 
 - Temporarily disabled layer & legend until fast rainapp data retrieval becomes
   possible.
