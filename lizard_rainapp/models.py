@@ -5,6 +5,7 @@
 import logging
 
 from django.contrib.gis.db import models
+from lizard_map.models import Setting as MapSetting
 
 logger = logging.getLogger(__name__)
 
@@ -38,3 +39,7 @@ class CompleteRainValue(models.Model):
     has been stored. Again, datetime is copied from fews datetime."""
     parameterkey = models.CharField(max_length=32)
     datetime = models.DateTimeField()
+
+class Setting(MapSetting):
+    """Settings like present in lizard-map, but use a different CACHE_KEY."""
+    CACHE_KEY = 'lizard-rainapp.Setting'
