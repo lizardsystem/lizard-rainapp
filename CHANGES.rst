@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.5.7 (unreleased)
+0.5.7 (2011-11-14)
 ------------------
 
 - Added Setting model, admin and migration.
