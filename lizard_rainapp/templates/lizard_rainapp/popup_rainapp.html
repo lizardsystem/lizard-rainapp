@@ -23,8 +23,8 @@
   </tr>
   {% endif %}
   <tr>
-    <th>Tijdspanne</th>
-    <th>Max (mm)</th>
+    <th>Periode</th>
+    <th>mm</th>
     <th>Start</th>
     <th>Eind</th>
     <th>Herhalingstijd
@@ -33,7 +33,7 @@
 </thead>
 <tbody>
   <tr>
-  <td>{{ element.period_summary_row.td_window }}</td>
+  <td>{{ element.period_summary_row.delta }} dagen</td>
   <td>{{ element.period_summary_row.max|floatformat:0|default:'-' }}</td>
   <td>{{ element.period_summary_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
   <td>{{ element.period_summary_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
@@ -71,7 +71,7 @@
     </td>
     {% endif %}
     <td class="button">
-      <a href="{% url lizard_map.export_identifier_csv %}?workspace_item_id={{workspace_item.id }}&identifier_json={{ element.identifier|json_escaped }}"
+      <a href="{{ collage_item_prop.url }}"
          class="ss_table_save ss_sprite noprint"
          title="Export csv"
          >export tijdreeksen</a>

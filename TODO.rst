@@ -15,3 +15,6 @@ Have a slider to navigate to available coloring of shapes in the current
 daterange, only of there's a fewsunblobbed full of rainappdata.
 
 Investigate if map rendering would speed up if simpler shapes would be used.
+
+Goal for 0.6: Shapes on map rendering, but only for one municipality /
+region at a time.

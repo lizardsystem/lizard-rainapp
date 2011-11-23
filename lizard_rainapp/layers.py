@@ -4,7 +4,6 @@ import datetime
 import locale
 import logging
 import iso8601
-import mapnik
 import pytz
 
 from django.db.models import Max
@@ -18,9 +17,7 @@ from django.contrib.gis.geos import Point
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
-from lizard_map.coordinates import RD
 from lizard_map.coordinates import google_to_rd
-from lizard_shape.models import ShapeLegendClass
 from lizard_rainapp.calculations import herhalingstijd
 from lizard_rainapp.calculations import moving_sum
 from lizard_rainapp.calculations import meter_square_to_km_square
@@ -77,7 +74,6 @@ class RainAppAdapter(FewsJdbc):
         return datetimes_utc[0]
 
     def _t_to_string(self, t):
-        logger.debug(t)
         if t is None:
             return '-'
         elif t > 1:
@@ -177,7 +173,6 @@ class RainAppAdapter(FewsJdbc):
     def search(self, google_x, google_y, radius=None):
         """Search by coordinates, return matching items as list of dicts
         """
-
         rd_point_clicked = Point(*google_to_rd(google_x, google_y))
         geo_objects = GeoObject.objects.filter(
             geometry__contains=rd_point_clicked)
@@ -189,8 +184,8 @@ class RainAppAdapter(FewsJdbc):
                 md=Max('datetime'))['md']
             if maxdate is not None:
                 # If there is a maxdate, there must be a value at that date,
-                # the import script should take care of that. However, it can be
-                # a negative value, which is actually a statuscode.
+                # the import script should take care of that. However,
+                # it can be a negative value, which is actually a statuscode.
                 maxdate_site_tz = UTC.localize(maxdate).astimezone(self.tz)
                 # import pdb;pdb.set_trace()
                 value = g.rainvalue_set.get(datetime=maxdate,
@@ -230,6 +225,7 @@ class RainAppAdapter(FewsJdbc):
               height,
               layout_extra=None):
         """Return png image data for barchart."""
+
         today_site_tz = self.tz.localize(datetime.datetime.now())
         start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
         graph = RainappGraph(start_date_utc,
@@ -287,6 +283,7 @@ class RainAppAdapter(FewsJdbc):
         more'. Else the cache will always miss. Expects and returns UTC
         datetimes, with or without tzinfo
         """
+
         start_date_cache = datetime.datetime(
             start_date.year, start_date.month, start_date.day)
         end_date_cache = (
@@ -298,7 +295,6 @@ class RainAppAdapter(FewsJdbc):
                 self.jdbc_source.id, self.filterkey, self.parameterkey,
                 identifier['location'], start_date_cache, end_date_cache))
         # Datetimes are in string and stored in datetime_str.
-        logger.debug('Trying cache...')
         values = cache.get(cache_key)
         if values is None:
             logger.debug('Caching values for %s' % identifier['location'])
@@ -342,6 +338,7 @@ class RainAppAdapter(FewsJdbc):
         """Calculate stats.
 
         Expects utc, returns site timezone datetimes... Sorry."""
+
         logger.debug(('Calculating rain stats for' +
                       'start=%s, end=%s, td_window=%s') %
                      (start_date_utc, end_date_utc, td_window))
@@ -393,6 +390,7 @@ class RainAppAdapter(FewsJdbc):
         """
         Popup with graph - table - bargraph.
         """
+
         logger.info('parameterkey: %s' % self.parameterkey)
         add_snippet = layout_options.get('add_snippet', False)
         if snippet_group:
@@ -426,10 +424,9 @@ class RainAppAdapter(FewsJdbc):
                 kwargs={'snippet_group_id': snippet_group.id},
             )
         else:
-            image_url_base = reverse(
-                "lizard_map.workspace_item_image",
-                kwargs={'workspace_item_id': self.workspace_item.id},
-            )
+            image_url_base = (self.workspace_mixin_item.
+                              url("lizard_map_adapter_image",
+                                  identifiers))
 
         for identifier in identifiers:
 
@@ -442,10 +439,10 @@ class RainAppAdapter(FewsJdbc):
             area_km2 = meter_square_to_km_square(area_m2)
 
             period_summary_row = {
-                'td_window': 'periode',
                 'max': sum([v['value'] for v in values]),
                 'start': start_date,
                 'end': end_date,
+                'delta': (end_date - start_date).days,
                 't': self._t_to_string(None),
             }
 
@@ -453,7 +450,7 @@ class RainAppAdapter(FewsJdbc):
                 url_extra = ''
             else:
                 identifier_escaped = json.dumps(identifier).replace('"', '%22')
-                url_extra = '?&identifier=%s' % identifier_escaped
+                url_extra = '&identifier=%s' % identifier_escaped
 
             info.append({
                 'identifier': identifier,
