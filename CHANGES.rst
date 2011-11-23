@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.5.8 (unreleased)
+0.5.8 (2011-11-23)
 ------------------
 
 - Updates to Lizard 3. 
