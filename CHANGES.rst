@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.5.8 (unreleased)
 ------------------
 
-- Updates to Lizard 3. TODO: CSV export. Don't use in production yet.
+- Updates to Lizard 3. 
 
 - Changed 'Tijdspanne' to 'Periode' and 'Max (mm)' to 'mm'.
 
