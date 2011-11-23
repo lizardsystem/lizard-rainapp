@@ -456,10 +456,10 @@ class RainAppAdapter(FewsJdbc):
                 'identifier': identifier,
                 'shortname': '%s - %s' % (
                     self._get_location_name(identifier),
-                    self.workspace_item.name),
+                    self.workspace_mixin_item.name),
                 'name': '%s - %s' % (
                     self._get_location_name(identifier),
-                    self.workspace_item.name),
+                    self.workspace_mixin_item.name),
                 'location': self._get_location_name(identifier),
                 'period_summary_row': period_summary_row,
                 'table': [self.rain_stats(values,
@@ -469,6 +469,9 @@ class RainAppAdapter(FewsJdbc):
                                           end_date_utc)
                           for td_window in td_windows],
                 'image_url': image_url_base + url_extra,
+                'url': self.workspace_mixin_item.url(
+                        "lizard_map_adapter_values", [identifier, ],
+                        extra_kwargs={'output_type': 'csv'}),
             })
 
         return render_to_string(
@@ -477,4 +480,6 @@ class RainAppAdapter(FewsJdbc):
              'symbol_url': symbol_url,
              'add_snippet': add_snippet,
              'workspace_item': self.workspace_item,
-             'info': info})
+             'info': info,
+             }
+)
