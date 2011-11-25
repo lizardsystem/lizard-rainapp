@@ -17,6 +17,8 @@ class GeoObject(models.Model):
     code = models.CharField(max_length=16, null=True)
     x = models.FloatField()
     y = models.FloatField()
+
+    # Field appears to be unused? -RemcoG 2011 11 25
     area = models.FloatField()  # In square meters
     geometry = models.GeometryField(srid=4326)
     objects = models.GeoManager()

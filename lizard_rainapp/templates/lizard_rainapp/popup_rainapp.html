@@ -34,7 +34,7 @@
 <tbody>
   <tr>
   <td>{{ element.period_summary_row.delta }} dagen</td>
-  <td>{{ element.period_summary_row.max|floatformat:0|default:'-' }}</td>
+  <td>{{ element.period_summary_row.max|floatformat:1|default:'-' }}</td>
   <td>{{ element.period_summary_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
   <td>{{ element.period_summary_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
   <td>{{ element.period_summary_row.t }}</td>
@@ -42,7 +42,7 @@
   {% for table_row in element.table %}
   <tr>
   <td>{{ table_row.td_window|short_timedelta }}</td>
-  <td>{{ table_row.max|floatformat:0|default:'-' }}</td>
+  <td>{{ table_row.max|floatformat:1|default:'-' }}</td>
   <td>{{ table_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
   <td>{{ table_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
   <td>{{ table_row.t }}</td>

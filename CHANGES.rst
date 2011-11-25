@@ -2,11 +2,22 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.5.9 (unreleased)
+0.6.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Re-enabled layer & legend, so that it can be used for individual
+  municipalities (Almere, Heerhugowaard).
 
+- Uses several optional settings in settings.py:
+  RAINAPP_SHAPEFILE, RAINAPP_ID_FIELD, RAINAPP_NAME_FIELD,
+  RAINAPP_CODE_FIELD, RAINAPP_X_FIELD, RAINAPP_Y_FIELD,
+  RAINAPP_AREA_FIELD
+
+  Without them, RainApp uses defaults that amount to loading the
+  municipalities data.
+
+- Settings RAINAPP_USE_SHAPES decides whether to draw the shapes
+  or just user standard icons
 
 0.5.8 (2011-11-23)
 ------------------
