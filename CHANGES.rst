@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.6.0 (unreleased)
-------------------
+0.6 (2011-11-25)
+----------------
 
 - Re-enabled layer & legend, so that it can be used for individual
   municipalities (Almere, Heerhugowaard).
