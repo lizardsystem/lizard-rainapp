@@ -59,21 +59,16 @@
     </td>
     {% endif %}
     {% if add_snippet %}
-{% if 0 %}
-{% TODO this currently gives a CSRF token error. Since this button
-also doesn't exist in live versions of rainapp, I don't feel guilty
-about just commenting it out. Remco Gerlich 2011 11 23, Trac #3405
     <td class="button">
       <a href="{% url lizard_map_collage_add %}"
          class="ss_sprite ss_star collage-add"
          data-name="{{ element.name }}"
-         data-adapter-class="{{ workspace_item.adapter_class }}"
-         data-adapter-layer-json="{{ workspace_item.adapter_layer_json }}"
-         data-identifier="{{ element.identifier }}"
+         data-adapter-class="{{ element.workspace_item.adapter_class }}"
+         data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
+         data-identifier="{{ element.identifier_json }}"
          data-target-id="#edit-collage"
          title="Toevoegen aan selectie">&nbsp;</a>
     </td>
-{% endif %}
     {% endif %}
     <td class="button">
       <a href="{{ element.url }}"

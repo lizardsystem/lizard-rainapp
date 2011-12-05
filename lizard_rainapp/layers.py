@@ -474,6 +474,7 @@ class RainAppAdapter(FewsJdbc):
 
             info.append({
                 'identifier': identifier,
+                'identifier_json': json.dumps(identifier).replace('"', '%22'),
                 'shortname': '%s - %s' % (
                     self._get_location_name(identifier),
                     self.workspace_mixin_item.name),
@@ -492,6 +493,7 @@ class RainAppAdapter(FewsJdbc):
                 'url': self.workspace_mixin_item.url(
                         "lizard_map_adapter_values", [identifier, ],
                         extra_kwargs={'output_type': 'csv'}),
+                'workspace_item': self.workspace_mixin_item,
             })
 
         return render_to_string(
