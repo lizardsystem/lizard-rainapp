@@ -2,10 +2,15 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.7 (unreleased)
+0.7 (2011-12-08)
 ----------------
 
-- Nothing changed yet.
+- Fixed IE7 issue with too wide tables.
+
+- Fixed add to collage button.
+
+- Apparently fixed 24h issue without being aware of it
+  (at least, it works now on my development system).
 
 
 0.6 (2011-11-25)
