@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 # The offset to add to get_timeseries dates to get the right dates back.
 # ^^^ Update: As of 2011-09-16, there is no offset anymore, so it can be set
 # to zero, and after some months removed.
-INVESTIGATED_LOCATION = getattr(settings, 'RAINAPP_IMPORT_START_LOCATION', 'GEM_001')
+INVESTIGATED_LOCATION = getattr(settings, 'RAINAPP_IMPORT_START_LOCATION',
+                                'GEM_001')
 
 LOOK_BACK_PERIOD = {
     'P.radar.5m': datetime.timedelta(hours=6),
@@ -37,7 +38,7 @@ class NoDataError(Exception):
 def import_recent_data(datetime_ref):
     """Copy the rainvalues most recent to datetime_ref into local db."""
     js = JdbcSource.objects.get(slug='rainapp')
-    fid = getattr(settings,'RAINAPP_FILTER', 'gemeentes')
+    fid = getattr(settings, 'RAINAPP_FILTER', 'gemeentes')
 
     logger.info('Getting parameters from fews and locations from django.')
     pids = [p['parameterid'] for p in js.get_named_parameters(filter_id=fid)]
@@ -71,7 +72,7 @@ def import_recent_data(datetime_ref):
         last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
 
     for pid in pids:
-        print 'pid='+pid
+        print 'pid=' + pid
 
         unit = js.get_unit(pid)
         ts_kwargs.update({
@@ -84,7 +85,7 @@ def import_recent_data(datetime_ref):
             'parameterkey': pid,
             'datetime': last_value_date[pid],
         }
-        
+
         # Only do the import if it hasn't been done yet
         if not CompleteRainValue.objects.filter(**completerainvalue).exists():
             logger.info('Syncing data for parameter %s.' % pid)
@@ -107,8 +108,8 @@ def import_recent_data(datetime_ref):
                     data = [{'time': last_value_date[pid], 'value': -1}]
 
                 if len(data) > 1:
-                    info_str = ('Ambiguous data for parameter %s at location ' +
-                                   '%s. Putting -3.') % (pid, lid)
+                    info_str = ('Ambiguous data for parameter %s at ' +
+                                   'location %s. Putting -3.') % (pid, lid)
                     logger.info(info_str)
                     data = [{'time': last_value_date[pid], 'value': -3}]
 
@@ -123,12 +124,13 @@ def import_recent_data(datetime_ref):
                 if not RainValue.objects.filter(**rainvalue).exists():
                     RainValue(**rainvalue).save()
 
-                if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) / REPORT_GROUP_SIZE):
+                if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) /
+                                                      REPORT_GROUP_SIZE):
                     logger.info('synced %s values.' % (i + 1))
 
-            # After all data is received, a completerainvalueobject is stored, to
-            # indicate to other code that the rainvalues for this datetime can be
-            # used.
+            # After all data is received, a completerainvalueobject is
+            # stored, to indicate to other code that the rainvalues
+            # for this datetime can be used.
             CompleteRainValue(**completerainvalue).save()
 
 
@@ -153,4 +155,3 @@ class Command(BaseCommand):
         delete_older_data(datetime_threshold=datetime_threshold)
 
         import_recent_data(datetime_ref=now)
-

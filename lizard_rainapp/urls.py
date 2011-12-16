@@ -29,7 +29,6 @@ urlpatterns = patterns(
     )
 
 
-
 if settings.DEBUG:
     # Add this also to the projects that use this application
     urlpatterns += patterns('',

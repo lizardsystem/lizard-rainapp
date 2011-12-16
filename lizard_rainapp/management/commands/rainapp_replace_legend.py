@@ -30,28 +30,28 @@ def replace_legend():
 
     slc.save()
 
-    legend_props_24h = [
-        {'color': '8e36ed', 'index': 1, 'label': u'>=40',
-         'max_value': u'', 'min_value': u'40'},
-        {'color': 'ac25a5', 'index': 2, 'label': u'>=35',
-         'max_value': u'40', 'min_value': u'35'},
-        {'color': 'd21450', 'index': 3, 'label': u'>=30',
-         'max_value': u'35', 'min_value': u'30'},
-        {'color': 'fe0002', 'index': 4, 'label': u'>=25',
-         'max_value': u'30', 'min_value': u'25'},
-        {'color': '0001fe', 'index': 5, 'label': u'>=20',
-         'max_value': u'25', 'min_value': u'20'},
-        {'color': '374cff', 'index': 6, 'label': u'>=15',
-         'max_value': u'20', 'min_value': u'15'},
-        {'color': '7294ff', 'index': 7, 'label': u'>=10',
-         'max_value': u'15', 'min_value':u'10'},
-        {'color':'abdfff', 'index': 8, 'label':u'>=5',
-         'max_value':u'10', 'min_value':u'5'},
-        {'color':'ffffff', 'index':9, 'label':u'>=0',
-         'max_value':u'5', 'min_value':u'0'},
-        {'color':'000000', 'index':10, 'label':u'Geen data',
-         'max_value':u'-0.5', 'min_value':u'-3.5'},
-    ]
+    # legend_props_24h = [
+    #     {'color': '8e36ed', 'index': 1, 'label': u'>=40',
+    #      'max_value': u'', 'min_value': u'40'},
+    #     {'color': 'ac25a5', 'index': 2, 'label': u'>=35',
+    #      'max_value': u'40', 'min_value': u'35'},
+    #     {'color': 'd21450', 'index': 3, 'label': u'>=30',
+    #      'max_value': u'35', 'min_value': u'30'},
+    #     {'color': 'fe0002', 'index': 4, 'label': u'>=25',
+    #      'max_value': u'30', 'min_value': u'25'},
+    #     {'color': '0001fe', 'index': 5, 'label': u'>=20',
+    #      'max_value': u'25', 'min_value': u'20'},
+    #     {'color': '374cff', 'index': 6, 'label': u'>=15',
+    #      'max_value': u'20', 'min_value': u'15'},
+    #     {'color': '7294ff', 'index': 7, 'label': u'>=10',
+    #      'max_value': u'15', 'min_value':u'10'},
+    #     {'color':'abdfff', 'index': 8, 'label':u'>=5',
+    #      'max_value':u'10', 'min_value':u'5'},
+    #     {'color':'ffffff', 'index':9, 'label':u'>=0',
+    #      'max_value':u'5', 'min_value':u'0'},
+    #     {'color':'000000', 'index':10, 'label':u'Geen data',
+    #      'max_value':u'-0.5', 'min_value':u'-3.5'},
+    # ]
 
     legend_props = [
         {'color': '8e36ed', 'index': 1, 'label': u'>=25',

@@ -26,7 +26,8 @@ tests_require = [
 
 setup(name='lizard-rainapp',
       version=version,
-      description="RainApp - visualizing rain statistics based on measurements",
+      description=("RainApp - visualizing rain statistics " +
+                   "based on measurements"),
       long_description=long_description,
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=['Programming Language :: Python',
@@ -42,7 +43,7 @@ setup(name='lizard-rainapp',
       zip_safe=False,
       install_requires=install_requires,
       tests_require=tests_require,
-      extras_require = {'test': tests_require},
+      extras_require={'test': tests_require},
       entry_points={
           'console_scripts': [
             ],

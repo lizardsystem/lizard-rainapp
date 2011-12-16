@@ -42,6 +42,7 @@ class CompleteRainValue(models.Model):
     parameterkey = models.CharField(max_length=32)
     datetime = models.DateTimeField()
 
+
 class Setting(MapSetting):
     """Settings like present in lizard-map, but use a different CACHE_KEY."""
     CACHE_KEY = 'lizard-rainapp.Setting'

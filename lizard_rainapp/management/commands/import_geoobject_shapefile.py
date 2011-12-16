@@ -2,20 +2,18 @@
 # Copyright 2011 Nelen & Schuurmans
 import logging
 
-from pkg_resources import resource_filename
-from osgeo import ogr
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
-from lizard_map import coordinates
-
 from lizard_rainapp.models import GeoObject
+from osgeo import ogr
+from pkg_resources import resource_filename
 
 logger = logging.getLogger(__name__)
 
 
 def load_shapefile():
-    shapefile_filename = getattr(settings, 'RAINAPP_SHAPEFILE', 
+    shapefile_filename = getattr(settings, 'RAINAPP_SHAPEFILE',
                                  resource_filename('lizard_rainapp',
                                                    'shape/gemeenten2009.shp'))
     # original_srs = ogr.osr.SpatialReference()
@@ -29,7 +27,8 @@ def load_shapefile():
     source = drv.Open(shapefile_filename)
 
     if source is None:
-        raise ValueError("Shapefile not found. Set RAINAPP_SHAPEFILE in settings.")
+        raise ValueError("Shapefile not found. Set RAINAPP_SHAPEFILE " +
+                         "in settings.")
 
     layer = source.GetLayer()
 

@@ -99,11 +99,11 @@ class RainAppAdapter(FewsJdbc):
             logger.warn("_get_location_name: Location names is empty;" +
                         " looking for location_id=%s in named_locations %s." %
                         (location_id, named_locations))
-            return "Unknown location" # TODO
+            return "Unknown location"  # TODO
 
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
-        
+
         # We don't want to use shapes, unless configured.
         # In the default case, the shapes cover all of the Netherlands
         # with one tile per municipality, and that is too slow.
