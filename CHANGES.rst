@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.8 (unreleased)
+0.8 (2012-01-12)
 ----------------
 
 - Fixes bug where several locations in the same popup would have the
