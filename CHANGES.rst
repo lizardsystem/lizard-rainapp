@@ -5,7 +5,8 @@ Changelog of lizard-rainapp
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixes bug where several locations in the same popup would have the
+  same graph.
 
 
 0.7 (2011-12-08)

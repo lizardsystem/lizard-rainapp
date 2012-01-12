@@ -6,76 +6,76 @@
   <strong>{{ title|truncatewords:8 }}</strong>
 </div>
 {% for element in info %}
-{# bar graph #}
-<div style="width: 100%; height: 240px;"
-     class="img-use-my-size">
-  <a href="{{ element.image_url }}"
-     class="replace-with-image">
-    afbeelding nog niet geladen
-  </a>
-</div>
-{# table #}
-<table cellspacing="0" cellpadding="0">
-<thead>
-  {% if info|length > 1 %}
-  <tr>
-    <th colspan="2">{{ element.location }}</th>
-  </tr>
-  {% endif %}
-  <tr>
-    <th>Periode</th>
-    <th>mm</th>
-    <th>Start</th>
-    <th>Eind</th>
-    <th>Herhalingstijd
-    </th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-  <td>{{ element.period_summary_row.delta }} dagen</td>
-  <td>{{ element.period_summary_row.max|floatformat:1|default:'-' }}</td>
-  <td>{{ element.period_summary_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>{{ element.period_summary_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>{{ element.period_summary_row.t }}</td>
-  </tr>
-  {% for table_row in element.table %}
-  <tr>
-  <td>{{ table_row.td_window|short_timedelta }}</td>
-  <td>{{ table_row.max|floatformat:1|default:'-' }}</td>
-  <td>{{ table_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>{{ table_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
-  <td>{{ table_row.t }}</td>
-  </tr>
-  {% endfor %}
-</tbody>
-</table>
-{# Extra buttons #}
-<table cellspacing="0" cellpadding="0">
-  <tr>
-    {% if info|length > 1 %}
-    <td>
-      {{ element.name }}
-    </td>
-    {% endif %}
-    {% if add_snippet %}
-    <td class="button">
-      <a href="{% url lizard_map_collage_add %}"
-         class="ss_sprite ss_star collage-add"
-         data-name="{{ element.name }}"
-         data-adapter-class="{{ element.workspace_item.adapter_class }}"
-         data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
-         data-identifier="{{ element.identifier_json }}"
-         data-target-id="#edit-collage"
-         title="Toevoegen aan selectie">&nbsp;</a>
-    </td>
-    {% endif %}
-    <td class="button">
-      <a href="{{ element.url }}"
-         class="ss_table_save ss_sprite noprint"
-         title="Export csv"
-         >export tijdreeksen</a>
-    </td>
-  </tr>
-</table>
+  {# bar graph #}
+  <div style="width: 100%; height: 240px;"
+       class="img-use-my-size">
+    <a href="{{ element.image_url }}"
+       class="replace-with-image">
+      afbeelding nog niet geladen
+    </a>
+  </div>
+  {# table #}
+  <table cellspacing="0" cellpadding="0">
+    <thead>
+      {% if info|length > 1 %}
+        <tr>
+          <th colspan="2">{{ element.location }}</th>
+        </tr>
+      {% endif %}
+      <tr>
+        <th>Periode</th>
+        <th>mm</th>
+        <th>Start</th>
+        <th>Eind</th>
+        <th>Herhalingstijd
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ element.period_summary_row.delta }} dagen</td>
+        <td>{{ element.period_summary_row.max|floatformat:1|default:'-' }}</td>
+        <td>{{ element.period_summary_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
+        <td>{{ element.period_summary_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
+        <td>{{ element.period_summary_row.t }}</td>
+      </tr>
+      {% for table_row in element.table %}
+        <tr>
+          <td>{{ table_row.td_window|short_timedelta }}</td>
+          <td>{{ table_row.max|floatformat:1|default:'-' }}</td>
+          <td>{{ table_row.start|date:"d-m-Y H:i"|default:'-' }}</td>
+          <td>{{ table_row.end|date:"d-m-Y H:i"|default:'-' }}</td>
+          <td>{{ table_row.t }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {# Extra buttons #}
+  <table cellspacing="0" cellpadding="0">
+    <tr>
+      {% if info|length > 1 %}
+      <td>
+        {{ element.name }}
+      </td>
+      {% endif %}
+      {% if add_snippet %}
+        <td class="button">
+          <a href="{% url lizard_map_collage_add %}"
+             class="ss_sprite ss_star collage-add"
+             data-name="{{ element.name }}"
+             data-adapter-class="{{ element.workspace_item.adapter_class }}"
+             data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
+             data-identifier="{{ element.identifier_json }}"
+             data-target-id="#edit-collage"
+             title="Toevoegen aan selectie">&nbsp;</a>
+        </td>
+      {% endif %}
+      <td class="button">
+        <a href="{{ element.url }}"
+           class="ss_table_save ss_sprite noprint"
+           title="Export csv"
+           >export tijdreeksen</a>
+      </td>
+    </tr>
+  </table>
 {% endfor %}

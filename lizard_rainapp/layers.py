@@ -411,12 +411,14 @@ class RainAppAdapter(FewsJdbc):
         Popup with graph - table - bargraph.
         """
 
+        # As far as I know, snippet_group isn't used anymore. I added a warning
+        # here and removed any references to it further into the function.
+        if snippet_group is not None:
+            logger.warn("Snippet_group unexpectedly used in rainapp.layers html()")
+
         logger.info('parameterkey: %s' % self.parameterkey)
         add_snippet = layout_options.get('add_snippet', False)
-        if snippet_group:
-            identifiers = [
-                snippet.identifier
-                for snippet in snippet_group.snippets.filter(visible=True)]
+
         title = 'RainApp (%s)' % ', '.join(
             [self._get_location_name(identifier)
              for identifier in identifiers])
@@ -437,18 +439,11 @@ class RainAppAdapter(FewsJdbc):
         info = []
 
         symbol_url = self.symbol_url()
-        if snippet_group:
-            # Note that the rainapp image does not support tweaking labels
-            image_url_base = reverse(
-                "lizard_map.snippet_group_image",
-                kwargs={'snippet_group_id': snippet_group.id},
-            )
-        else:
-            image_url_base = (self.workspace_mixin_item.
-                              url("lizard_map_adapter_image",
-                                  identifiers))
-
+            
         for identifier in identifiers:
+            image_url = (self.workspace_mixin_item.
+                         url("lizard_map_adapter_image",
+                             (identifier,)))
 
             values = self._cached_values(identifier,
                                          start_date_utc,
@@ -465,12 +460,6 @@ class RainAppAdapter(FewsJdbc):
                 'delta': (end_date - start_date).days,
                 't': self._t_to_string(None),
             }
-
-            if snippet_group:
-                url_extra = ''
-            else:
-                identifier_escaped = json.dumps(identifier).replace('"', '%22')
-                url_extra = '&identifier=%s' % identifier_escaped
 
             info.append({
                 'identifier': identifier,
@@ -489,7 +478,7 @@ class RainAppAdapter(FewsJdbc):
                                           start_date_utc,
                                           end_date_utc)
                           for td_window in td_windows],
-                'image_url': image_url_base + url_extra,
+                'image_url': image_url,
                 'url': self.workspace_mixin_item.url(
                         "lizard_map_adapter_values", [identifier, ],
                         extra_kwargs={'output_type': 'csv'}),
