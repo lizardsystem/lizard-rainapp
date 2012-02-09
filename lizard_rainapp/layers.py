@@ -41,8 +41,11 @@ except locale.Error:
 
 UNIT_TO_TIMEDELTA = {
     'mm/24hr': datetime.timedelta(hours=24),
+    'mm/24h': datetime.timedelta(hours=24),
     'mm/3hr': datetime.timedelta(hours=3),  # Not encountered yet
+    'mm/3h': datetime.timedelta(hours=3),  # Not encountered yet
     'mm/hr': datetime.timedelta(hours=1),
+    'mm/h': datetime.timedelta(hours=1),
     'mm/5min': datetime.timedelta(minutes=5),
 }
 

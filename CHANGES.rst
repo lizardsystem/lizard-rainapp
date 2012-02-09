@@ -2,10 +2,10 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.9 (unreleased)
+0.9 (2012-02-09)
 ----------------
 
-- Nothing changed yet.
+- Added "mm/h" besides "mm/hr".
 
 
 0.8 (2012-01-12)
