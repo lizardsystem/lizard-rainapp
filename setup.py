@@ -19,6 +19,7 @@ install_requires = [
     'lizard-shape >= 1.23',
     'nens-graph >= 0.3.1',
     'pkginfo',
+    'GDAL',
     ],
 
 tests_require = [

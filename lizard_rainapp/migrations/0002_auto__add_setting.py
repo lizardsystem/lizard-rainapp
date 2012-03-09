@@ -6,8 +6,12 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('lizard_map', '0002_auto__add_setting__add_backgroundmap'),
+    )
+
     def forwards(self, orm):
-        
+
         # Adding model 'Setting'
         db.create_table('lizard_rainapp_setting', (
             ('setting_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['lizard_map.Setting'], unique=True, primary_key=True)),
@@ -16,7 +20,7 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        
+
         # Deleting model 'Setting'
         db.delete_table('lizard_rainapp_setting')
 

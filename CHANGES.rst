@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 0.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added lizard-map as a dependency because rainapp depends on it.
 
 
 0.9 (2012-02-09)
