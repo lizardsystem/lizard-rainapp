@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.1 (unreleased)
+1.1 (2012-03-22)
 ----------------
 
 - Added Waterschappen shapefiles, config. Using the default
