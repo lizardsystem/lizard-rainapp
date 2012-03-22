@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.1.2 (unreleased)
+1.1.2 (2012-03-22)
 ------------------
 
 - Removed 'CODE' field of a geoobject. It was unused, and giving
