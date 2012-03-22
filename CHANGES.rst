@@ -2,10 +2,10 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.2 (unreleased)
-----------------
+1.1.1 (2012-03-22)
+------------------
 
-- Nothing changed yet.
+- Slugs in rainapp.cfg were wrong.
 
 
 1.1 (2012-03-22)
