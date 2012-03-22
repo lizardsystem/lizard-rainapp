@@ -5,8 +5,13 @@ Changelog of lizard-rainapp
 0.10 (unreleased)
 -----------------
 
+- Made import scripts, layers more generic so that multiple shapefiles
+  can be used on the same site. This also means more configuration;
+  see README.
+
 - Added lizard-map as a dependency because rainapp depends on it.
 
+- Added testdata and some tests.
 
 0.9 (2012-02-09)
 ----------------
@@ -52,7 +57,7 @@ Changelog of lizard-rainapp
 0.5.8 (2011-11-23)
 ------------------
 
-- Updates to Lizard 3. 
+- Updates to Lizard 3.
 
 - Changed 'Tijdspanne' to 'Periode' and 'Max (mm)' to 'mm'.
 
@@ -186,7 +191,7 @@ Changelog of lizard-rainapp
 0.2 (2011-09-01)
 ----------------
 
-- #3184 Removed graph from popup, put barchart on top. 
+- #3184 Removed graph from popup, put barchart on top.
 
 - Changed location id's to location names
 

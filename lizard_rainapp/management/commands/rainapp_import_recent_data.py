@@ -6,9 +6,10 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from lizard_fewsjdbc.models import JdbcSource
+from lizard_rainapp.models import CompleteRainValue
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainValue
-from lizard_rainapp.models import CompleteRainValue
+from lizard_rainapp.models import RainappConfig
 
 import datetime
 import logging
@@ -16,17 +17,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-# The offset to add to get_timeseries dates to get the right dates back.
-# ^^^ Update: As of 2011-09-16, there is no offset anymore, so it can be set
-# to zero, and after some months removed.
-INVESTIGATED_LOCATION = getattr(settings, 'RAINAPP_IMPORT_START_LOCATION',
-                                'GEM_001')
-
 LOOK_BACK_PERIOD = {
-    'P.radar.5m': datetime.timedelta(hours=6),
-    'P.radar.1h': datetime.timedelta(hours=6),
-    'P.radar.3h': datetime.timedelta(hours=6),
-    'P.radar.24h': datetime.timedelta(hours=48),
+    # Two weeks for all
+    'P.radar.5m': datetime.timedelta(hours=2*24*7),
+    'P.radar.1h': datetime.timedelta(hours=2*24*7),
+    'P.radar.3h': datetime.timedelta(hours=2*24*7),
+    'P.radar.24h': datetime.timedelta(hours=2*24*7),
 }
 REPORT_GROUP_SIZE = 50
 
@@ -35,26 +31,36 @@ class NoDataError(Exception):
     pass
 
 
-def import_recent_data(datetime_ref):
+def import_recent_data(rainapp_config, datetime_ref):
     """Copy the rainvalues most recent to datetime_ref into local db."""
-    js = JdbcSource.objects.get(slug='rainapp')
-    fid = getattr(settings, 'RAINAPP_FILTER', 'gemeentes')
+    js = rainapp_config.jdbcsource
+    fid = rainapp_config.filter_id
+
+    logger.info("Importing for config '%s': jdbcsource '%s' and filter '%s'." %
+                (rainapp_config.name, js.slug, fid))
 
     logger.info('Getting parameters from fews and locations from django.')
-    pids = [p['parameterid'] for p in js.get_named_parameters(filter_id=fid)]
-    lids = [g.municipality_id for g in GeoObject.objects.all()]
+    parameters = js.get_named_parameters(filter_id=fid)
+    pids = [p['parameterid'] for p in parameters]
+    lids = [g.municipality_id for g in
+            GeoObject.objects.filter(config=rainapp_config)]
 
-    logger.info('Probing location %s for latest values.' %
-                INVESTIGATED_LOCATION)
+    if not lids:
+        logger.critical("No geo objects for config %s! Shapefile not loaded?" %
+                        (rainapp_config.name,))
+        return
+
+    logger.info('Probing location %s for latest values.' % lids[0])
 
     ts_kwargs = {
         'filter_id': fid,
         'parameter_id': None,
         'end_date': datetime_ref,
-        'location_id': INVESTIGATED_LOCATION,
+        'location_id': lids[0],
     }
 
     last_value_date = {}
+
 
     # Separate loop for probing so that any error occurs right at the start
     for pid in pids:
@@ -65,6 +71,7 @@ def import_recent_data(datetime_ref):
         timeseries = js.get_timeseries(**ts_kwargs)
 
         if not timeseries:
+            logger.debug(ts_kwargs)
             raise NoDataError('No data for parameter %s at location %s.' % (
                               ts_kwargs['parameter_id'],
                               ts_kwargs['location_id']))
@@ -84,6 +91,7 @@ def import_recent_data(datetime_ref):
         completerainvalue = {
             'parameterkey': pid,
             'datetime': last_value_date[pid],
+            'config': rainapp_config,
         }
 
         # Only do the import if it hasn't been done yet
@@ -119,6 +127,7 @@ def import_recent_data(datetime_ref):
                     'unit': unit,
                     'datetime': data[0]['time'].replace(tzinfo=None),
                     'value': data[0]['value'],
+                    'config': rainapp_config,
                 }
 
                 if not RainValue.objects.filter(**rainvalue).exists():
@@ -154,4 +163,5 @@ class Command(BaseCommand):
         datetime_threshold = now - datetime.timedelta(days=3)
         delete_older_data(datetime_threshold=datetime_threshold)
 
-        import_recent_data(datetime_ref=now)
+        for rainapp_config in RainappConfig.objects.all():
+            import_recent_data(rainapp_config, datetime_ref=now)

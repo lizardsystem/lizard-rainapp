@@ -25,6 +25,7 @@ from lizard_rainapp.calculations import moving_sum
 from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import CompleteRainValue
+from lizard_rainapp.models import RainappConfig
 from lizard_shape.models import ShapeLegendClass
 
 from nens_graph.rainapp import RainappGraph
@@ -64,6 +65,12 @@ class RainAppAdapter(FewsJdbc):
             *args, **kwargs)
 
         self.tz = pytz.timezone(settings.TIME_ZONE)
+
+        try:
+            self.rainapp_config = RainappConfig.objects.get(
+                jdbcsource=self.jdbc_source, filter_id=self.filterkey)
+        except RainappConfig.DoesNotExist:
+            self.rainapp_config = None
 
     def _to_utc(self, *datetimes):
         """Convert datetimes to UTC."""
@@ -112,21 +119,15 @@ class RainAppAdapter(FewsJdbc):
         # with one tile per municipality, and that is too slow.
         # However, for applications such as showing individual shapes
         # within a single municipality, it can be turned on in settings.
-        if not getattr(settings, 'RAINAPP_USE_SHAPES', False):
+        if (not getattr(settings, 'RAINAPP_USE_SHAPES', False)
+            or not self.rainapp_config):
             return super(RainAppAdapter, self).layer(*args, **kwargs)
-
-        # rainapp_rule = mapnik.Rule()
-        # rainapp_rule.set_else(True)
-        # rainapp_rule.filter = mapnik.Filter("[value] > 0 and [value] < 0.2")
-        # TODO use the legend class and use the layers from the legend.
-        # fill = mapnik.PolygonSymbolizer(mapnik.Color('#7F7FFF'))
-        # edge = mapnik.LineSymbolizer(mapnik.Color('#0000FF'), 1)
-        # rainapp_rule.symbols.extend([fill, edge])
 
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         rainapp_style = slc.mapnik_style()
+
         self.maxdate = CompleteRainValue.objects.filter(
-            parameterkey=self.parameterkey).aggregate(
+            parameterkey=self.parameterkey, config=self.rainapp_config).aggregate(
             md=Max('datetime'))['md']
 
         if self.maxdate is None:
@@ -137,7 +138,9 @@ class RainAppAdapter(FewsJdbc):
                     gob.geometry as geometry
                 from
                     lizard_rainapp_geoobject gob
-            ) as data"""
+                where
+                    gob.config_id = '%d'
+            ) as data""" % (self.rainapp_config.pk,)
         else:
             maxdate_str = self.maxdate.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -151,8 +154,9 @@ class RainAppAdapter(FewsJdbc):
                     on rav.geo_object_id = gob.id
                 where
                     rav.datetime = '%s' and
-                    rav.parameterkey = '%s'
-            ) as data""" % (maxdate_str, self.parameterkey)
+                    rav.parameterkey = '%s' and
+                    gob.config_id = '%d'
+            ) as data""" % (maxdate_str, self.parameterkey, self.rainapp_config.pk)
 
         query = str(query)  # Seems mapnik or postgis don't like unicode?
 
@@ -194,16 +198,21 @@ class RainAppAdapter(FewsJdbc):
         return asf.legend(updates)
 
     def search(self, google_x, google_y, radius=None):
-        """Search by coordinates, return matching items as list of dicts
-        """
+        "Search by coordinates, return matching items as list of dicts"
+
         rd_point_clicked = Point(*google_to_rd(google_x, google_y))
+        if not self.rainapp_config:
+            return None
+
         geo_objects = GeoObject.objects.filter(
-            geometry__contains=rd_point_clicked)
+            geometry__contains=rd_point_clicked,
+            config=self.rainapp_config)
 
         result = []
         for g in geo_objects:
             maxdate = CompleteRainValue.objects.filter(
-                parameterkey=self.parameterkey).aggregate(
+                parameterkey=self.parameterkey,
+                config=self.rainapp_config).aggregate(
                 md=Max('datetime'))['md']
             if maxdate is not None:
                 # If there is a maxdate, there must be a value at that date,
@@ -409,15 +418,10 @@ class RainAppAdapter(FewsJdbc):
             'end': datetime_end_site_tz,
             't': self._t_to_string(t)}
 
-    def html(self, snippet_group=None, identifiers=None, layout_options=None):
+    def html(self, identifiers=None, layout_options=None):
         """
         Popup with graph - table - bargraph.
         """
-
-        # As far as I know, snippet_group isn't used anymore. I added a warning
-        # here and removed any references to it further into the function.
-        if snippet_group is not None:
-            logger.warn("Snippet_group unexpectedly used in rainapp.layers html()")
 
         logger.info('parameterkey: %s' % self.parameterkey)
         add_snippet = layout_options.get('add_snippet', False)
@@ -442,7 +446,7 @@ class RainAppAdapter(FewsJdbc):
         info = []
 
         symbol_url = self.symbol_url()
-            
+
         for identifier in identifiers:
             image_url = (self.workspace_mixin_item.
                          url("lizard_map_adapter_image",
@@ -453,7 +457,8 @@ class RainAppAdapter(FewsJdbc):
                                          end_date_utc)
 
             area_m2 = GeoObject.objects.get(
-                municipality_id=identifier['location']).geometry.area
+                municipality_id=identifier['location'],
+                config=self.rainapp_config).geometry.area
             area_km2 = meter_square_to_km_square(area_m2)
 
             period_summary_row = {

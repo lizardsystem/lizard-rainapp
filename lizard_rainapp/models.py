@@ -6,8 +6,35 @@ import logging
 
 from django.contrib.gis.db import models
 from lizard_map.models import Setting as MapSetting
+from lizard_fewsjdbc.models import JdbcSource
 
 logger = logging.getLogger(__name__)
+
+
+class RainappConfig(models.Model):
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(unique=True)
+
+    jdbcsource = models.ForeignKey(JdbcSource)
+    filter_id = models.CharField(max_length=128)
+
+    def __unicode__(self):
+        return (u'%s (%s in %s)' %
+                (self.name, self.filter_id, self.jdbcsource.name))
+
+    @classmethod
+    def get_by_jdbcslug_and_filter(cls, jdbc_slug, filter_id):
+        try:
+            jdbcsource = JdbcSource.objects.get(slug=jdbc_slug)
+        except JdbcSource.DoesNotExist:
+            raise ValueError("JdbcSource with slug '%s' not found." %
+                             jdbc_slug)
+
+        try:
+            return cls.objects.get(jdbcsource=jdbcsource, filter_id=filter_id)
+        except cls.DoesNotExist:
+            raise ValueError("RainappConfig filter_id '%s' not found." %
+                             filter_id)
 
 
 class GeoObject(models.Model):
@@ -18,7 +45,8 @@ class GeoObject(models.Model):
     x = models.FloatField()
     y = models.FloatField()
 
-    # Field appears to be unused? -RemcoG 2011 11 25
+    config = models.ForeignKey(RainappConfig)
+
     area = models.FloatField()  # In square meters
     geometry = models.GeometryField(srid=4326)
     objects = models.GeoManager()
@@ -30,7 +58,11 @@ class GeoObject(models.Model):
 class RainValue(models.Model):
     """RainData stored locally. datetime is copied from fews datetime."""
     geo_object = models.ForeignKey('GeoObject')
+
+    config = models.ForeignKey(RainappConfig)
+
     parameterkey = models.CharField(max_length=32)
+
     unit = models.CharField(max_length=32)
     datetime = models.DateTimeField()
     value = models.FloatField()
@@ -39,6 +71,8 @@ class RainValue(models.Model):
 class CompleteRainValue(models.Model):
     """Date and parameter for which a complete set of RainValues
     has been stored. Again, datetime is copied from fews datetime."""
+    config = models.ForeignKey(RainappConfig)
+
     parameterkey = models.CharField(max_length=32)
     datetime = models.DateTimeField()
 
