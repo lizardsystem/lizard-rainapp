@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-0.10 (unreleased)
------------------
+1.0 (2012-03-22)
+----------------
 
 - Made import scripts, layers more generic so that multiple shapefiles
   can be used on the same site. This also means more configuration;
