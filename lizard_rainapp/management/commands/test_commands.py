@@ -12,7 +12,6 @@ from import_geoobject_shapefile import clear_old_data
 
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainappConfig
-from lizard_fewsjdbc.models import JdbcSource
 
 
 SOME_GEOOBJECT = 'POINT (30 10)'
@@ -81,7 +80,6 @@ class TestImportShapefiles(TestCase):
             o.update({'shapefile': 'wheeeeeeeeeeeeeeeeeeeeeeeeeee.xxx'})
             load_shapefile('section', o)
         self.assertRaises(ValueError, unexisting_filename)
-
 
         count = load_shapefile('section', options)
         self.assertEqual(GeoObject.objects.count(), count)

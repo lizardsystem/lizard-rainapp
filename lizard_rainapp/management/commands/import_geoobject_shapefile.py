@@ -13,7 +13,6 @@ from osgeo import ogr
 
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainappConfig
-from lizard_fewsjdbc.models import JdbcSource
 
 logger = logging.getLogger(__name__)
 

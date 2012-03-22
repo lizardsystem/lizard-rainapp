@@ -2,10 +2,8 @@
 # Copyright 2011 Nelen & Schuurmans
 from __future__ import division
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from lizard_fewsjdbc.models import JdbcSource
 from lizard_rainapp.models import CompleteRainValue
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainValue
@@ -19,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 LOOK_BACK_PERIOD = {
     # Two weeks for all
-    'P.radar.5m': datetime.timedelta(hours=2*24*7),
-    'P.radar.1h': datetime.timedelta(hours=2*24*7),
-    'P.radar.3h': datetime.timedelta(hours=2*24*7),
-    'P.radar.24h': datetime.timedelta(hours=2*24*7),
+    'P.radar.5m': datetime.timedelta(hours=2 * 24 * 7),
+    'P.radar.1h': datetime.timedelta(hours=2 * 24 * 7),
+    'P.radar.3h': datetime.timedelta(hours=2 * 24 * 7),
+    'P.radar.24h': datetime.timedelta(hours=2 * 24 * 7),
 }
 REPORT_GROUP_SIZE = 50
 
@@ -60,7 +58,6 @@ def import_recent_data(rainapp_config, datetime_ref):
     }
 
     last_value_date = {}
-
 
     # Separate loop for probing so that any error occurs right at the start
     for pid in pids:

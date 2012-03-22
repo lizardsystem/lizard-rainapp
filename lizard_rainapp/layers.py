@@ -10,7 +10,6 @@ import pytz
 from django.db.models import Max
 from django.conf import settings
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils import simplejson as json
@@ -126,9 +125,9 @@ class RainAppAdapter(FewsJdbc):
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         rainapp_style = slc.mapnik_style()
 
-        self.maxdate = CompleteRainValue.objects.filter(
-            parameterkey=self.parameterkey, config=self.rainapp_config).aggregate(
-            md=Max('datetime'))['md']
+        self.maxdate = (CompleteRainValue.objects.filter(
+                parameterkey=self.parameterkey, config=self.rainapp_config)
+                        .aggregate(md=Max('datetime'))['md'])
 
         if self.maxdate is None:
             # Color all shapes according to value -1
@@ -156,7 +155,8 @@ class RainAppAdapter(FewsJdbc):
                     rav.datetime = '%s' and
                     rav.parameterkey = '%s' and
                     gob.config_id = '%d'
-            ) as data""" % (maxdate_str, self.parameterkey, self.rainapp_config.pk)
+            ) as data""" % (maxdate_str, self.parameterkey,
+                            self.rainapp_config.pk)
 
         query = str(query)  # Seems mapnik or postgis don't like unicode?
 
