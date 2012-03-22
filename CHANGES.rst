@@ -5,7 +5,9 @@ Changelog of lizard-rainapp
 1.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added Waterschappen shapefiles, config. Using the default
+  shapefiles now requires creating a RainappConfig instance in the
+  admin interface.
 
 
 1.0 (2012-03-22)

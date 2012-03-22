@@ -68,7 +68,8 @@ configuration things:
    RAINAPP_CONFIGFILE = resource_filename('almere',
                                        'shape/almere.cfg')
 
-   Default: 'shape/gemeenten2009.cfg' in lizard_rainapp.
+   Default: 'shape/rainapp.cfg' in lizard_rainapp. To use this default, you must
+   create a "rainappconfig" RainappConfig in the admin interface!
 
     RAINAPP_USE_SHAPES
 

@@ -108,7 +108,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         config_file = getattr(settings, 'RAINAPP_CONFIGFILE',
                               resource_filename('lizard_rainapp',
-                                                'shape/gemeenten2009.cfg'))
+                                                'shape/rainapp.cfg'))
         logger.info("Using config file %s." % (config_file,))
         clear_old_data()
         load_shapefiles(config_file, load_shapefile)
