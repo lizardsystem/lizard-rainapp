@@ -46,7 +46,6 @@ configuration things:
   shapefile=AlmereGebieden.shp
   id_field=ID_NS
   name_field=ID
-  code_field=ID
   x_field=X
   y_field=Y
   area_field=AREA
@@ -54,9 +53,6 @@ configuration things:
 
   Note that there is no path info, only a filename. The shapefiles must be
   in the same directory as the .cfg file.
-
-  In the future, the redundancy between 'name_field' and 'code_field' will
-  be factored out.
 
 2. Two settings.py options:
 

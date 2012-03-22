@@ -41,7 +41,7 @@ class GeoObject(models.Model):
     """Line elements from river shapefile."""
     municipality_id = models.CharField(max_length=16)
     name = models.CharField(max_length=128)
-    code = models.CharField(max_length=16, null=True)
+
     x = models.FloatField()
     y = models.FloatField()
 

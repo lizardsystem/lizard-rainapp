@@ -80,7 +80,6 @@ def load_shapefile(section, options):
         kwargs = {
             'municipality_id': get_field('id_field'),
             'name': get_field('name_field'),
-            'code': get_field('code_field'),
             'x': get_field('x_field'),
             'y': get_field('y_field'),
             'area': get_field('area_field', -1),
