@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.1.3 (unreleased)
+1.1.3 (2012-03-23)
 ------------------
 
 - Fixed bad UTF8 character in Waterschappen shapefile.
