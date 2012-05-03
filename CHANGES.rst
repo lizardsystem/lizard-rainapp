@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.1.4 (unreleased)
-------------------
+1.2 (2012-05-03)
+----------------
 
 - Only import data going 2 days back.
 
