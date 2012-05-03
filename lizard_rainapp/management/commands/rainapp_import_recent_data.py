@@ -16,11 +16,11 @@ import sys
 logger = logging.getLogger(__name__)
 
 LOOK_BACK_PERIOD = {
-    # Two weeks for all
-    'P.radar.5m': datetime.timedelta(hours=2 * 24 * 7),
-    'P.radar.1h': datetime.timedelta(hours=2 * 24 * 7),
-    'P.radar.3h': datetime.timedelta(hours=2 * 24 * 7),
-    'P.radar.24h': datetime.timedelta(hours=2 * 24 * 7),
+    # Two days for all
+    'P.radar.5m': datetime.timedelta(hours=2 * 24),
+    'P.radar.1h': datetime.timedelta(hours=2 * 24),
+    'P.radar.3h': datetime.timedelta(hours=2 * 24),
+    'P.radar.24h': datetime.timedelta(hours=2 * 24),
 }
 REPORT_GROUP_SIZE = 50
 
@@ -91,48 +91,46 @@ def import_recent_data(rainapp_config, datetime_ref):
             'config': rainapp_config,
         }
 
-        # Only do the import if it hasn't been done yet
-        if not CompleteRainValue.objects.filter(**completerainvalue).exists():
-            logger.info('Syncing data for parameter %s.' % pid)
-            for i, lid in enumerate(lids):
-                ts_kwargs.update({
+        logger.info('Syncing data for parameter %s.' % pid)
+        for i, lid in enumerate(lids):
+            ts_kwargs.update({
                     'location_id': lid,
-                })
+                    })
 
-                try:
-                    data = js.get_timeseries(**ts_kwargs)
-                except:
-                    error_type = sys.exc_info()[0]
-                    info_str = ('Error getting timeseries for %s. The error ' +
-                                    'was %s; putting -2.') % (lid, error_type)
-                    logger.info(info_str)
-                    data = [{'time': last_value_date[pid], 'value': -2}]
+            try:
+                data = js.get_timeseries(**ts_kwargs)
+            except:
+                error_type = sys.exc_info()[0]
+                info_str = ('Error getting timeseries for %s. The error ' +
+                            'was %s; putting -2.') % (lid, error_type)
+                logger.info(info_str)
+                data = [{'time': last_value_date[pid], 'value': -2}]
 
-                if not data:
-                    logger.info('no data for %s, putting -1.' % lid)
-                    data = [{'time': last_value_date[pid], 'value': -1}]
+            if not data:
+                logger.info('no data for %s, putting -1.' % lid)
+                data = [{'time': last_value_date[pid], 'value': -1}]
 
-                if len(data) > 1:
-                    info_str = ('Ambiguous data for parameter %s at ' +
-                                   'location %s. Putting -3.') % (pid, lid)
-                    logger.info(info_str)
-                    data = [{'time': last_value_date[pid], 'value': -3}]
+            if len(data) > 1:
+                info_str = ('Ambiguous data for parameter %s at ' +
+                            'location %s. Putting -3.') % (pid, lid)
+                logger.info(info_str)
+                data = [{'time': last_value_date[pid], 'value': -3}]
 
-                rainvalue = {
-                    'geo_object': GeoObject.objects.get(municipality_id=lid),
-                    'parameterkey': pid,
-                    'unit': unit,
-                    'datetime': data[0]['time'].replace(tzinfo=None),
-                    'value': data[0]['value'],
-                    'config': rainapp_config,
+            rainvalue = {
+                'geo_object': GeoObject.objects.get(municipality_id=lid),
+                'parameterkey': pid,
+                'unit': unit,
+                'datetime': data[0]['time'].replace(tzinfo=None),
+                'value': data[0]['value'],
+                'config': rainapp_config,
                 }
 
-                if not RainValue.objects.filter(**rainvalue).exists():
-                    RainValue(**rainvalue).save()
+            if not RainValue.objects.filter(**rainvalue).exists():
+                RainValue(**rainvalue).save()
 
-                if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) /
-                                                      REPORT_GROUP_SIZE):
-                    logger.info('synced %s values.' % (i + 1))
+            if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) /
+                                                  REPORT_GROUP_SIZE):
+                logger.info('synced %s values.' % (i + 1))
 
             # After all data is received, a completerainvalueobject is
             # stored, to indicate to other code that the rainvalues

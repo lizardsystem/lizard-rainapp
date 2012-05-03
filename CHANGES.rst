@@ -5,7 +5,14 @@ Changelog of lizard-rainapp
 1.1.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Only import data going 2 days back.
+
+- In the 'rainapp_import_recent_data' management command, *always*
+  import data, independent of the existence of a CompleteRainvalue
+  value: because of the way 5 minute / hour / 24 hour values are
+  interpolated in FEWS, they CAN CHANGE after initial import. In
+  particular, some values always start out at 0 and are only correct
+  to their true values several hours later.
 
 
 1.1.3 (2012-03-23)
