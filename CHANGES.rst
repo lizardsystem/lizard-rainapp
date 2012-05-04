@@ -2,10 +2,10 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.2.1 (unreleased)
+1.2.1 (2012-05-04)
 ------------------
 
-- Nothing changed yet.
+- Fixes issue #3564 (to do with the one below).
 
 
 1.2 (2012-05-03)

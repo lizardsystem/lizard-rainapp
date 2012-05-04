@@ -200,6 +200,9 @@ class RainAppAdapter(FewsJdbc):
     def search(self, google_x, google_y, radius=None):
         "Search by coordinates, return matching items as list of dicts"
 
+        logger.debug("google_x " + str(google_x))
+        logger.debug("google_y " + str(google_y))
+
         rd_point_clicked = Point(*google_to_rd(google_x, google_y))
         if not self.rainapp_config:
             return None
@@ -214,6 +217,9 @@ class RainAppAdapter(FewsJdbc):
                 parameterkey=self.parameterkey,
                 config=self.rainapp_config).aggregate(
                 md=Max('datetime'))['md']
+
+            logger.debug('SEARCH maxdate = '+str(maxdate))
+
             if maxdate is not None:
                 # If there is a maxdate, there must be a value at that date,
                 # the import script should take care of that. However,
