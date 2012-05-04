@@ -132,7 +132,12 @@ def import_recent_data(rainapp_config, datetime_ref):
             del existing_value['value']
 
             if not RainValue.objects.filter(**existing_value).exists():
-                RainValue(**rainvalue).save()
+                try:
+                    rainvalue = RainValue.objects.get(**existing_value)
+                except RainValue.DoesNotExist:
+                    rainvalue = RainValue(**existing_value)
+                rainvalue.value = rainvalue['value']
+                rainvalue.save()
 
             if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) /
                                                   REPORT_GROUP_SIZE):
