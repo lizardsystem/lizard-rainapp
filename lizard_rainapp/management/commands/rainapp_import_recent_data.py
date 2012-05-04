@@ -74,6 +74,7 @@ def import_recent_data(rainapp_config, datetime_ref):
                               ts_kwargs['location_id']))
 
         last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
+        logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
 
     for pid in pids:
         print 'pid=' + pid
@@ -125,7 +126,12 @@ def import_recent_data(rainapp_config, datetime_ref):
                 'config': rainapp_config,
                 }
 
-            if not RainValue.objects.filter(**rainvalue).exists():
+            # Check whether this value already exists - except for the value,
+            # of course.
+            existing_value = rainvalue.copy()
+            del existing_value['value']
+
+            if not RainValue.objects.filter(**existing_value).exists():
                 RainValue(**rainvalue).save()
 
             if (i + 1) / REPORT_GROUP_SIZE == int((i + 1) /
