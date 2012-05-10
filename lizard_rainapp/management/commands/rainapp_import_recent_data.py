@@ -131,11 +131,10 @@ def import_recent_data(rainapp_config, datetime_ref):
             existing_value = rainvalue.copy()
             del existing_value['value']
 
-            if not RainValue.objects.filter(**existing_value).exists():
-                try:
-                    rain = RainValue.objects.get(**existing_value)
-                except RainValue.DoesNotExist:
-                    rain = RainValue(**existing_value)
+            try:
+                rain = RainValue.objects.get(**existing_value)
+            except RainValue.DoesNotExist:
+                rain = RainValue(**existing_value)
             rain.value = rainvalue['value']
             rain.save()
 
