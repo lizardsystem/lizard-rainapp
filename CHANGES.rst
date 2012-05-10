@@ -2,10 +2,11 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.2.4 (unreleased)
+1.2.4 (2012-05-10)
 ------------------
 
-- Nothing changed yet.
+- _Really_ fixes #3564 (the bug was a wrong indentation level of two
+  lines -- curses, Python!)
 
 
 1.2.3 (2012-05-04)
