@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 1.2.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add dependency on fewsjdbc to migrations 
 
 
 1.2.5 (2012-05-10)
