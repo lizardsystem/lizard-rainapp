@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.2.8 (unreleased)
+1.2.8 (2012-05-18)
 ------------------
 
 - Added MANIFEST.in.
