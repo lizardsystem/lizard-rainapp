@@ -60,14 +60,15 @@
       {% endif %}
       {% if add_snippet %}
         <td class="button">
-          <a href="{% url lizard_map_collage_add %}"
+          <span
+             href="{% url lizard_map_collage_add %}"
              class="ss_sprite ss_star collage-add"
              data-name="{{ element.name }}"
              data-adapter-class="{{ element.workspace_item.adapter_class }}"
              data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
              data-identifier="{{ element.identifier_json }}"
              data-target-id="#edit-collage"
-             title="Toevoegen aan selectie">&nbsp;</a>
+             title="Toevoegen aan selectie">&nbsp;</span>
         </td>
       {% endif %}
       <td class="button">
