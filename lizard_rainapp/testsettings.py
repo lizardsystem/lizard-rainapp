@@ -29,19 +29,18 @@ DATABASES = {
     # the specified database exists. When the tests cannot run, Jenkins sees
     # that as an error.
     'default': {
-        'NAME': 'rainapp',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'USER': 'buildout',
-        'PASSWORD': 'buildout',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'test.db',
+        'ENGINE': 'django.contrib.gis.db.backends.spatialite',
         },
     }
+
 SITE_ID = 1
 INSTALLED_APPS = [
     'lizard_rainapp',
     'lizard_map',
     'lizard_ui',
+    'lizard_fewsjdbc',
+    'lizard_security',
     'staticfiles',
     'compressor',
     'south',
