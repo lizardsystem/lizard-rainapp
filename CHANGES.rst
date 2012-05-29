@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 1.2.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed UI.
 
 
 1.2.8 (2012-05-18)
