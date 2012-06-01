@@ -19,6 +19,7 @@ from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
 from lizard_map.coordinates import google_to_rd
 from lizard_map.coordinates import RD
+from lizard_map.adapter import FlotGraph
 from lizard_rainapp.calculations import herhalingstijd
 from lizard_rainapp.calculations import moving_sum
 from lizard_rainapp.calculations import meter_square_to_km_square
@@ -59,6 +60,8 @@ class RainAppAdapter(FewsJdbc):
 
     identifier: {'location': <locationid>}
     """
+    support_flot_graph = True
+
     def __init__(self, *args, **kwargs):
         super(RainAppAdapter, self).__init__(
             *args, **kwargs)
@@ -255,23 +258,43 @@ class RainAppAdapter(FewsJdbc):
 
         return result
 
-    def image(self,
-              identifiers,
-              start_date,
-              end_date,
-              width,
-              height,
-              layout_extra=None):
+    def image(
+        self,
+        identifiers,
+        start_date,
+        end_date,
+        width,
+        height,
+        layout_extra=None
+    ):
         """Return png image data for barchart."""
+        return self._render_graph(
+            identifiers,
+            start_date,
+            end_date,
+            width=width,
+            height=height,
+            layout_extra=layout_extra,
+            GraphClass=RainappGraph
+        )
 
+    def _render_graph(
+        self,
+        identifiers,
+        start_date,
+        end_date,
+        layout_extra=None,
+        raise_404_if_empty=False,
+        GraphClass=RainappGraph,
+        **extra_params
+    ):
         today_site_tz = self.tz.localize(datetime.datetime.now())
         start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
-        graph = RainappGraph(start_date_utc,
+        graph = GraphClass(start_date_utc,
                              end_date_utc,
-                             width=width,
-                             height=height,
                              today=today_site_tz,
-                             tz=self.tz)
+                             tz=self.tz,
+                             **extra_params)
 
         # Gets timeseries, draws the bars, sets  the legend
         for identifier in identifiers:
@@ -311,7 +334,7 @@ class RainAppAdapter(FewsJdbc):
 
         graph.responseobject = HttpResponse(content_type='image/png')
 
-        return graph.png_response()
+        return graph.render()
 
     def _cached_values(self, identifier, start_date, end_date):
         """
@@ -457,6 +480,7 @@ class RainAppAdapter(FewsJdbc):
             image_url = (self.workspace_mixin_item.
                          url("lizard_map_adapter_image",
                              (identifier,)))
+            flot_graph_data_url = self.workspace_mixin_item.url("lizard_map_adapter_flot_graph_data", (identifier,))
 
             values = self._cached_values(identifier,
                                          start_date_utc,
@@ -493,18 +517,40 @@ class RainAppAdapter(FewsJdbc):
                                           end_date_utc)
                           for td_window in td_windows],
                 'image_url': image_url,
+                'flot_graph_data_url': flot_graph_data_url,
                 'url': self.workspace_mixin_item.url(
                         "lizard_map_adapter_values", [identifier, ],
                         extra_kwargs={'output_type': 'csv'}),
                 'workspace_item': self.workspace_mixin_item,
+                'adapter': self
             })
 
         return render_to_string(
             'lizard_rainapp/popup_rainapp.html',
-            {'title': title,
-             'symbol_url': symbol_url,
-             'add_snippet': add_snippet,
-             'workspace_item': self.workspace_item,
-             'info': info,
-             }
-)
+            {
+                'title': title,
+                'symbol_url': symbol_url,
+                'add_snippet': add_snippet,
+                'workspace_item': self.workspace_item,
+                'info': info,
+            }
+        )
+
+    ##
+    # New for flot graphs
+    ##
+
+    def flot_graph_data(
+        self,
+        identifiers,
+        start_date,
+        end_date,
+        layout_extra=None,
+    ):
+        return self._render_graph(
+            identifiers,
+            start_date,
+            end_date,
+            layout_extra=layout_extra,
+            GraphClass=FlotGraph
+        )
