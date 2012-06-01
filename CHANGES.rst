@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 1.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add support for FlotGraph.
 
 
 1.3 (2012-05-29)
