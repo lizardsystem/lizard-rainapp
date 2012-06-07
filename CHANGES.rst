@@ -5,7 +5,9 @@ Changelog of lizard-rainapp
 1.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Some popup styling.
+
+- Remove old graph.
 
 
 1.4 (2012-06-01)
