@@ -60,6 +60,7 @@ def import_recent_data(rainapp_config, datetime_ref):
     last_value_date = {}
 
     # Separate loop for probing so that any error occurs right at the start
+    pids_without_data = []
     for pid in pids:
         ts_kwargs.update({
             'parameter_id': pid,
@@ -72,10 +73,13 @@ def import_recent_data(rainapp_config, datetime_ref):
             logger.info('No data for parameter %s at location %s.' % (
                               ts_kwargs['parameter_id'],
                               ts_kwargs['location_id']))
-            continue
+            pids_without_data.append(pid)
+        else:
+            last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
+            logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
 
-        last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
-        logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
+    for pid in pids_without_data:
+        pids.remove(pid) 
 
     for pid in pids:
         print 'pid=' + pid
