@@ -69,9 +69,10 @@ def import_recent_data(rainapp_config, datetime_ref):
 
         if not timeseries:
             logger.debug(ts_kwargs)
-            raise NoDataError('No data for parameter %s at location %s.' % (
+            logger.info('No data for parameter %s at location %s.' % (
                               ts_kwargs['parameter_id'],
                               ts_kwargs['location_id']))
+            continue
 
         last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
         logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
