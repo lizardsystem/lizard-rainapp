@@ -79,7 +79,7 @@ def import_recent_data(rainapp_config, datetime_ref):
             logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
 
     for pid in pids_without_data:
-        pids.remove(pid) 
+        pids.remove(pid)
 
     for pid in pids:
         print 'pid=' + pid
