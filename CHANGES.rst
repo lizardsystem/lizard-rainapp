@@ -9,6 +9,8 @@ Changelog of lizard-rainapp
 
 - Remove old graph.
 
+- Fix cron job stopping on missing timeseries (24h measurements). Skip importing those instead.
+
 
 1.4 (2012-06-01)
 ----------------
