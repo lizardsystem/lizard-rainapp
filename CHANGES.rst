@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.5 (unreleased)
+1.5 (2012-06-19)
 ----------------
 
 - Some popup styling.
