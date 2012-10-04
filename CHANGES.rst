@@ -5,7 +5,9 @@ Changelog of lizard-rainapp
 1.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Styling and typo fixes.
+
+- Properly add pytz dependency.
 
 
 1.5 (2012-06-19)
