@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.6 (unreleased)
+1.6 (2012-10-04)
 ----------------
 
 - Styling and typo fixes.
