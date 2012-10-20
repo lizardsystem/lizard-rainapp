@@ -477,9 +477,7 @@ class RainAppAdapter(FewsJdbc):
         symbol_url = self.symbol_url()
 
         for identifier in identifiers:
-            image_url = (self.workspace_mixin_item.
-                         url("lizard_map_adapter_image",
-                             (identifier,)))
+            image_graph_url = self.workspace_mixin_item.url("lizard_map_adapter_image", (identifier,))
             flot_graph_data_url = self.workspace_mixin_item.url("lizard_map_adapter_flot_graph_data", (identifier,))
 
             values = self._cached_values(identifier,
@@ -516,7 +514,7 @@ class RainAppAdapter(FewsJdbc):
                                           start_date_utc,
                                           end_date_utc)
                           for td_window in td_windows],
-                'image_url': image_url,
+                'image_graph_url': image_graph_url,
                 'flot_graph_data_url': flot_graph_data_url,
                 'url': self.workspace_mixin_item.url(
                         "lizard_map_adapter_values", [identifier, ],
