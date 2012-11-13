@@ -50,27 +50,22 @@
     </tbody>
   </table>
   {# Extra buttons #}
-  <table cellspacing="0" cellpadding="0">
-    <tr>
+  <ul class="without-bullets">
+    <li>
       {% if add_snippet %}
-        <td class="button">
-          <a
-             href="{% url lizard_map_collage_add %}"
-             class="ss_sprite ss_star collage-add"
-             data-name="{{ element.name }}"
-             data-adapter-class="{{ element.workspace_item.adapter_class }}"
-             data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
-             data-identifier="{{ element.identifier_json }}"
-             data-target-id="#edit-collage"
-             title="Toevoegen aan selectie">&nbsp;</a>
-        </td>
+        <a
+           href="{% url lizard_map_collage_add %}"
+           class="ss_sprite ss_star collage-add"
+           data-name="{{ element.name }}"
+           data-adapter-class="{{ element.workspace_item.adapter_class }}"
+           data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
+           data-identifier="{{ element.identifier_json }}"
+           data-target-id="#edit-collage"
+           title="Toevoegen aan selectie">{{ element.name }}</a>
       {% endif %}
-      <td class="button">
         <a href="{{ element.url }}"
            class="ss_table_save ss_sprite noprint"
-           title="Export csv"
-           >exporteer tijdreeksen</a>
-      </td>
-    </tr>
-  </table>
+           title="Exporteer tijdreeksen">exporteer tijdreeksen</a>
+    </li>
+  </ul>
 {% endfor %}

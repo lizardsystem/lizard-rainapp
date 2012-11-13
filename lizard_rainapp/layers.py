@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils import simplejson as json
 from django.contrib.gis.geos import Point
+from django.template.defaultfilters import date as _date
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
@@ -232,15 +233,15 @@ class RainAppAdapter(FewsJdbc):
                 value = g.rainvalue_set.get(datetime=maxdate,
                     parameterkey=self.parameterkey).value
                 if value > -0.5:
-                    popup_text = '%s: %.1f mm (%s)' % (
+                    popup_text = '%s: %s: %.1f mm' % (
                         g.name,
-                        value,
-                        maxdate_site_tz.strftime('%d %b, %H:%M'))
+                        _date(maxdate_site_tz, "j F Y H:i").lower(),
+                        value)
                 else:
-                    popup_text = '%s: Geen data; code %i (%s)' % (
+                    popup_text = '%s: %s: Geen data; code %i' % (
                         g.name,
-                        value,
-                        maxdate_site_tz.strftime('%d %b, %H:%M'))
+                        _date(maxdate_site_tz, "j F Y H:i").lower(),
+                        value)
             else:
                 popup_text = '%s (Geen data)' % g.name
             identifier = {
@@ -451,13 +452,9 @@ class RainAppAdapter(FewsJdbc):
         """
         Popup with graph - table - bargraph.
         """
-
-        logger.info('parameterkey: %s' % self.parameterkey)
         add_snippet = layout_options.get('add_snippet', False)
 
-        title = 'RainApp (%s)' % ', '.join(
-            [self._get_location_name(identifier)
-             for identifier in identifiers])
+        parameter_name = self.jdbc_source.get_parameter_name(self.parameterkey)
 
         # Make table with given identifiers.
         # Layer options contain request - not the best way but it works.
@@ -496,16 +493,12 @@ class RainAppAdapter(FewsJdbc):
                 'delta': (end_date - start_date).days,
                 't': self._t_to_string(None),
             }
-
+            infoname = '%s, %s' % (self._get_location_name(identifier), parameter_name)
             info.append({
                 'identifier': identifier,
                 'identifier_json': json.dumps(identifier).replace('"', '%22'),
-                'shortname': '%s - %s' % (
-                    self._get_location_name(identifier),
-                    self.workspace_mixin_item.name),
-                'name': '%s - %s' % (
-                    self._get_location_name(identifier),
-                    self.workspace_mixin_item.name),
+                'shortname': infoname,
+                'name': infoname,
                 'location': self._get_location_name(identifier),
                 'period_summary_row': period_summary_row,
                 'table': [self.rain_stats(values,
@@ -526,11 +519,11 @@ class RainAppAdapter(FewsJdbc):
         return render_to_string(
             'lizard_rainapp/popup_rainapp.html',
             {
-                'title': title,
+                'title': parameter_name,
                 'symbol_url': symbol_url,
                 'add_snippet': add_snippet,
                 'workspace_item': self.workspace_item,
-                'info': info,
+                'info': info
             }
         )
 
