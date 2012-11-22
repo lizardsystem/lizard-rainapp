@@ -7,6 +7,7 @@ Changelog of lizard-rainapp
 
 - Support mixed flot/matplotlib (IE8) graphs.
 
+- Fixed naming of FEWS Parameters, and time formatting in the hover.
 
 1.6 (2012-10-04)
 ----------------
