@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.7 (unreleased)
+1.7 (2012-11-27)
 ----------------
 
 - Support mixed flot/matplotlib (IE8) graphs.
