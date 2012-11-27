@@ -9,6 +9,9 @@ Changelog of lizard-rainapp
 
 - Fixed naming of FEWS Parameters, and time formatting in the hover.
 
+- Properly set dependency versions.
+
+
 1.6 (2012-10-04)
 ----------------
 
