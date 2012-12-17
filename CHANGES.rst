@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.8 (unreleased)
+1.8 (2012-12-17)
 ----------------
 
 - Slightly change collage item naming.
