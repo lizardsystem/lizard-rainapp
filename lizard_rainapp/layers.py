@@ -252,7 +252,7 @@ class RainAppAdapter(FewsJdbc):
                 'distance': 0,
                 'workspace_item': self.workspace_item,
                 # 'name': g.name + ' (' + str(maxdate) + ')',
-                'name': popup_text,
+                'name': '{}, {}'.format(g.name, self.parameter_name),
                 'shortname': g.name,
                 'google_coords': (google_x, google_y),
             })
@@ -454,7 +454,7 @@ class RainAppAdapter(FewsJdbc):
         """
         add_snippet = layout_options.get('add_snippet', False)
 
-        parameter_name = self.jdbc_source.get_parameter_name(self.parameterkey)
+        parameter_name = self.parameter_name
 
         # Make table with given identifiers.
         # Layer options contain request - not the best way but it works.
