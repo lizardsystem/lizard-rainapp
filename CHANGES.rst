@@ -5,7 +5,11 @@ Changelog of lizard-rainapp
 1.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Moved some of the helper functions for calculating the
+  'herhalingstijden' from the adapter into calculations.py, so that
+  it's easier to use them from lizard-neerslagradar.
+
+- Removed unused code after the change in 1.8, do pep8 and pyflakes.
 
 
 1.8 (2012-12-17)

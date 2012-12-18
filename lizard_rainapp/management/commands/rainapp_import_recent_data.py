@@ -76,7 +76,8 @@ def import_recent_data(rainapp_config, datetime_ref):
             pids_without_data.append(pid)
         else:
             last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
-            logger.info(str(pid) + " last_value_date = " + str(last_value_date[pid]))
+            logger.info(
+                str(pid) + " last_value_date = " + str(last_value_date[pid]))
 
     for pid in pids_without_data:
         pids.remove(pid)

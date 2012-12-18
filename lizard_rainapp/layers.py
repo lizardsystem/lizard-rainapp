@@ -14,15 +14,15 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.utils import simplejson as json
 from django.contrib.gis.geos import Point
-from django.template.defaultfilters import date as _date
 
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.daterange import current_start_end_dates
 from lizard_map.coordinates import google_to_rd
 from lizard_map.coordinates import RD
 from lizard_map.adapter import FlotGraph
-from lizard_rainapp.calculations import herhalingstijd
-from lizard_rainapp.calculations import moving_sum
+from lizard_rainapp.calculations import t_to_string
+from lizard_rainapp.calculations import rain_stats
+from lizard_rainapp.calculations import UNIT_TO_TIMEDELTA
 from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import CompleteRainValue
@@ -40,16 +40,6 @@ try:
     locale.setlocale(locale.LC_TIME, 'nl_NL.UTF8')
 except locale.Error:
     logger.debug('No locale nl_NL.UTF8 on this os. Using default locale.')
-
-UNIT_TO_TIMEDELTA = {
-    'mm/24hr': datetime.timedelta(hours=24),
-    'mm/24h': datetime.timedelta(hours=24),
-    'mm/3hr': datetime.timedelta(hours=3),  # Not encountered yet
-    'mm/3h': datetime.timedelta(hours=3),  # Not encountered yet
-    'mm/hr': datetime.timedelta(hours=1),
-    'mm/h': datetime.timedelta(hours=1),
-    'mm/5min': datetime.timedelta(minutes=5),
-}
 
 LEGEND_DESCRIPTOR = 'Rainapp'
 UTC = pytz.timezone('UTC')
@@ -88,14 +78,6 @@ class RainAppAdapter(FewsJdbc):
         if len(datetimes) > 1:
             return datetimes_utc
         return datetimes_utc[0]
-
-    def _t_to_string(self, t):
-        if t is None:
-            return '-'
-        elif t > 1:
-            return 'T = %i' % t
-        else:
-            return 'T ≤ 1'
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
@@ -222,28 +204,8 @@ class RainAppAdapter(FewsJdbc):
                 config=self.rainapp_config).aggregate(
                 md=Max('datetime'))['md']
 
-            logger.debug('SEARCH maxdate = '+str(maxdate))
+            logger.debug('SEARCH maxdate = ' + str(maxdate))
 
-            if maxdate is not None:
-                # If there is a maxdate, there must be a value at that date,
-                # the import script should take care of that. However,
-                # it can be a negative value, which is actually a statuscode.
-                maxdate_site_tz = UTC.localize(maxdate).astimezone(self.tz)
-                # import pdb;pdb.set_trace()
-                value = g.rainvalue_set.get(datetime=maxdate,
-                    parameterkey=self.parameterkey).value
-                if value > -0.5:
-                    popup_text = '%s: %s: %.1f mm' % (
-                        g.name,
-                        _date(maxdate_site_tz, "j F Y H:i").lower(),
-                        value)
-                else:
-                    popup_text = '%s: %s: Geen data; code %i' % (
-                        g.name,
-                        _date(maxdate_site_tz, "j F Y H:i").lower(),
-                        value)
-            else:
-                popup_text = '%s (Geen data)' % g.name
             identifier = {
                 'location': g.municipality_id,
             }
@@ -251,7 +213,6 @@ class RainAppAdapter(FewsJdbc):
                 'identifier': identifier,
                 'distance': 0,
                 'workspace_item': self.workspace_item,
-                # 'name': g.name + ' (' + str(maxdate) + ')',
                 'name': '{}, {}'.format(g.name, self.parameter_name),
                 'shortname': g.name,
                 'google_coords': (google_x, google_y),
@@ -391,63 +352,6 @@ class RainAppAdapter(FewsJdbc):
 
         return values
 
-    def rain_stats(self,
-                   values,
-                   area_km2,
-                   td_window,
-                   start_date_utc,
-                   end_date_utc):
-        """Calculate stats.
-
-        Expects utc, returns site timezone datetimes... Sorry."""
-
-        logger.debug(('Calculating rain stats for' +
-                      'start=%s, end=%s, td_window=%s') %
-                     (start_date_utc, end_date_utc, td_window))
-        if not values:
-            return {
-                'td_window': td_window,
-                'max': None,
-                'start': None,
-                'end': None,
-                't': self._t_to_string(None)}
-
-        td_value = UNIT_TO_TIMEDELTA[values[0]['unit']]
-        max_values = moving_sum(values,
-                                td_window,
-                                td_value,
-                                start_date_utc,
-                                end_date_utc)
-
-        if max_values:
-            max_value = max(max_values, key=lambda i: i['value'])
-
-            hours = td_window.days * 24 + td_window.seconds / 3600.0
-            t = herhalingstijd(hours, area_km2, max_value['value'])
-        else:
-            max_value = {'value': None,
-                         'datetime_start_utc': None,
-                         'datetime_end_utc': None}
-            t = None
-
-        if max_value['datetime_start_utc'] is not None:
-            datetime_start_site_tz = max_value[
-                'datetime_start_utc'].astimezone(self.tz)
-        else:
-            datetime_start_site_tz = None
-        if max_value['datetime_end_utc'] is not None:
-            datetime_end_site_tz = max_value[
-                'datetime_end_utc'].astimezone(self.tz)
-        else:
-            datetime_end_site_tz = None
-
-        return {
-            'td_window': td_window,
-            'max': max_value['value'],
-            'start': datetime_start_site_tz,
-            'end': datetime_end_site_tz,
-            't': self._t_to_string(t)}
-
     def html(self, identifiers=None, layout_options=None):
         """
         Popup with graph - table - bargraph.
@@ -474,8 +378,10 @@ class RainAppAdapter(FewsJdbc):
         symbol_url = self.symbol_url()
 
         for identifier in identifiers:
-            image_graph_url = self.workspace_mixin_item.url("lizard_map_adapter_image", (identifier,))
-            flot_graph_data_url = self.workspace_mixin_item.url("lizard_map_adapter_flot_graph_data", (identifier,))
+            image_graph_url = self.workspace_mixin_item.url(
+                "lizard_map_adapter_image", (identifier,))
+            flot_graph_data_url = self.workspace_mixin_item.url(
+                "lizard_map_adapter_flot_graph_data", (identifier,))
 
             values = self._cached_values(identifier,
                                          start_date_utc,
@@ -491,9 +397,10 @@ class RainAppAdapter(FewsJdbc):
                 'start': start_date,
                 'end': end_date,
                 'delta': (end_date - start_date).days,
-                't': self._t_to_string(None),
+                't': t_to_string(None),
             }
-            infoname = '%s, %s' % (self._get_location_name(identifier), parameter_name)
+            infoname = '%s, %s' % (
+                self._get_location_name(identifier), parameter_name)
             info.append({
                 'identifier': identifier,
                 'identifier_json': json.dumps(identifier).replace('"', '%22'),
@@ -501,11 +408,11 @@ class RainAppAdapter(FewsJdbc):
                 'name': infoname,
                 'location': self._get_location_name(identifier),
                 'period_summary_row': period_summary_row,
-                'table': [self.rain_stats(values,
-                                          area_km2,
-                                          td_window,
-                                          start_date_utc,
-                                          end_date_utc)
+                'table': [rain_stats(values,
+                                     area_km2,
+                                     td_window,
+                                     start_date_utc,
+                                     end_date_utc)
                           for td_window in td_windows],
                 'image_graph_url': image_graph_url,
                 'flot_graph_data_url': flot_graph_data_url,
