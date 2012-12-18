@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.9 (unreleased)
+1.9 (2012-12-18)
 ----------------
 
 - Moved some of the helper functions for calculating the
