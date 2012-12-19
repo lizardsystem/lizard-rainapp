@@ -11,7 +11,6 @@ from django.template import loader
 
 from lizard_fewsjdbc.views import JdbcSourceView, HomepageView
 
-admin.autodiscover()
 handler404  # pyflakes
 
 urlpatterns = patterns(
@@ -25,13 +24,14 @@ urlpatterns = patterns(
                                filter_url_name="lizard_rainapp.jdbc_source"),
         name="lizard_rainapp.jdbc_source",
         ),
-    (r'^admin/', include(admin.site.urls)),
     )
 
-
-if settings.DEBUG:
-    # Add this also to the projects that use this application
-    urlpatterns += patterns('',
+if getattr(settings, 'LIZARD_RAINAPP_STANDALONE', False):
+    admin.autodiscover()
+    urlpatterns += patterns(
+        '',
+        (r'^map/', include('lizard_map.urls')),
+        (r'^admin/', include(admin.site.urls)),
         (r'', include('staticfiles.urls')),
     )
 
