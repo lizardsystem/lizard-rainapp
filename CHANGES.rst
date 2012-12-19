@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.10 (unreleased)
+1.10 (2012-12-19)
 -----------------
 
 - Fixed urls.py, so it won't recusively include other lizard-* URLs when
