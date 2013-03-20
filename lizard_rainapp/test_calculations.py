@@ -1,13 +1,14 @@
-from datetime import timedelta
 from datetime import datetime
+from datetime import timedelta
+import logging
 
 from django.test import TestCase
-from lizard_rainapp.calculations import meter_square_to_km_square
+import pytz
+
 from lizard_rainapp.calculations import herhalingstijd
+from lizard_rainapp.calculations import meter_square_to_km_square
 from lizard_rainapp.calculations import moving_sum
 
-import pytz
-import logging
 logger = logging.getLogger(__name__)
 
 UTC = pytz.timezone('UTC')

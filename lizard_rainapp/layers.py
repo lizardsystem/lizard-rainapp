@@ -1,35 +1,34 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import datetime
+import iso8601
 import locale
 import logging
 import mapnik
-import iso8601
 import pytz
 
-from django.db.models import Max
 from django.conf import settings
-from django.core.cache import cache
-from django.template.loader import render_to_string
-from django.http import HttpResponse
-from django.utils import simplejson as json
 from django.contrib.gis.geos import Point
-
+from django.core.cache import cache
+from django.db.models import Max
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.utils import simplejson as json
 from lizard_fewsjdbc.layers import FewsJdbc
-from lizard_map.daterange import current_start_end_dates
-from lizard_map.coordinates import google_to_rd
-from lizard_map.coordinates import RD
 from lizard_map.adapter import FlotGraph
-from lizard_rainapp.calculations import t_to_string
-from lizard_rainapp.calculations import rain_stats
+from lizard_map.coordinates import RD
+from lizard_map.coordinates import google_to_rd
+from lizard_map.daterange import current_start_end_dates
+from lizard_shape.models import ShapeLegendClass
+from nens_graph.rainapp import RainappGraph
+
 from lizard_rainapp.calculations import UNIT_TO_TIMEDELTA
 from lizard_rainapp.calculations import meter_square_to_km_square
-from lizard_rainapp.models import GeoObject
+from lizard_rainapp.calculations import rain_stats
+from lizard_rainapp.calculations import t_to_string
 from lizard_rainapp.models import CompleteRainValue
+from lizard_rainapp.models import GeoObject
 from lizard_rainapp.models import RainappConfig
-from lizard_shape.models import ShapeLegendClass
-
-from nens_graph.rainapp import RainappGraph
 
 logger = logging.getLogger(__name__)
 

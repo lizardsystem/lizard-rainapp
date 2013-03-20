@@ -2,8 +2,8 @@
 import logging
 
 from django.contrib.gis.db import models
-from lizard_map.models import Setting as MapSetting
 from lizard_fewsjdbc.models import JdbcSource
+from lizard_map.models import Setting as MapSetting
 
 logger = logging.getLogger(__name__)
 
