@@ -4,13 +4,19 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
     depends_on = (
         ("lizard_fewsjdbc", "0001_initial"),
     )
 
     def forwards(self, orm):
-        
+        db.start_transaction()
+        db.clear_table('lizard_rainapp_rainvalue')
+        db.clear_table('lizard_rainapp_completerainvalue')
+        db.clear_table('lizard_rainapp_geoobject')
+        db.commit_transaction()
+
         # Adding model 'RainappConfig'
         db.create_table('lizard_rainapp_rainappconfig', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -34,7 +40,7 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        
+
         # Deleting model 'RainappConfig'
         db.delete_table('lizard_rainapp_rainappconfig')
 
