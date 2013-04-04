@@ -5,7 +5,10 @@ Changelog of lizard-rainapp
 1.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Various code and documentation cleanups.
+
+- Clearing three tables' values in a migration to allow adding of the config
+  table. These three tables only contain caching results.
 
 
 1.10 (2012-12-19)
