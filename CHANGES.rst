@@ -2,7 +2,7 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.11 (unreleased)
+1.11 (2013-04-04)
 -----------------
 
 - Various code and documentation cleanups.
