@@ -126,7 +126,10 @@ class RainAppAdapter(FewsJdbc):
                     gob.config_id = '%d'
             ) as data""" % (self.rainapp_config.pk,)
         else:
-            maxdate_str = self.maxdate.strftime('%Y-%m-%d %H:%M:%S')
+            # For the query to behave properly, time zone information must be
+            # passed! For naive datetime, %Z will be formatted as an empty
+            # string, so that case is covered as well.
+            maxdate_str = self.maxdate.strftime('%Y-%m-%dT%H:%M:%S%Z')
 
             query = """(
                 select

@@ -5,7 +5,7 @@ Changelog of lizard-rainapp
 1.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed time zone bug in query.
 
 
 1.11 (2013-04-04)
