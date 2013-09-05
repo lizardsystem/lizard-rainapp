@@ -20,7 +20,7 @@ install_requires = [
     'nens-graph',
     'pkginfo',
     'pytz',
-    'GDAL',
+    'GDALfixed',
     ],
 
 tests_require = [
