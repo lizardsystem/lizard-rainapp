@@ -103,8 +103,7 @@ class RainAppAdapter(FewsJdbc):
         # with one tile per municipality, and that is too slow.
         # However, for applications such as showing individual shapes
         # within a single municipality, it can be turned on in settings.
-        if (not getattr(settings, 'RAINAPP_USE_SHAPES', False)
-            or not self.rainapp_config):
+        if not self.rainapp_config:
             return super(RainAppAdapter, self).layer(*args, **kwargs)
 
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
@@ -169,10 +168,6 @@ class RainAppAdapter(FewsJdbc):
         return layers, styles
 
     def legend(self, updates=None):
-
-        if not getattr(settings, 'RAINAPP_USE_SHAPES', False):
-            return super(RainAppAdapter, self).legend(updates)
-
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
         from lizard_shape.layers import AdapterShapefile
         la = {
