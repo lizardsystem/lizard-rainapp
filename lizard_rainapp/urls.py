@@ -30,6 +30,9 @@ urlpatterns = patterns(
         ),
     url(r'^beheer/$', views.AdminView.as_view(),
         name="lizard_rainapp_admin"),
+    url(r'^beheer/rainappshape/(?P<slug>[^/]+)/$',
+        views.DownloadShapeView.as_view(),
+        name="lizard_rainapp_download_shape"),
     )
 
 

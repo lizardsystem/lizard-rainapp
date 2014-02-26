@@ -31,5 +31,14 @@
   <dd><input class="btn btn-primary" type="submit" value="Versturen"/></dd>
   </dl>
   </form>
+
+  <h1>Download bestaande deelgebieden</h1>
+
+  <ul>
+  {% for rainapp_config in view.rainapp_configs %}
+    <li><a href="{{ rainapp_config.shape_download_url }}">{{ rainapp_config }}</a></li>
+  {% endfor %}
+  </ul>
+
 </div>
 {% endblock %}

@@ -1,7 +1,9 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
 import logging
 
+from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
+
 from lizard_fewsjdbc.models import JdbcSource
 from lizard_map.models import Setting as MapSetting
 
@@ -18,6 +20,15 @@ class RainappConfig(models.Model):
     def __unicode__(self):
         return (u'%s (%s in %s)' %
                 (self.name, self.filter_id, self.jdbcsource.name))
+
+    @property
+    def has_geoobjects(self):
+        return GeoObject.models.objects.filter(
+            config=self).exists()
+
+    def shape_download_url(self):
+        return reverse('lizard_rainapp_download_shape', kwargs=dict(
+                slug=self.slug))
 
     @classmethod
     def get_by_jdbcslug_and_filter(cls, jdbc_slug, filter_id):
@@ -36,6 +47,7 @@ class RainappConfig(models.Model):
 
 class GeoObject(models.Model):
     """Line elements from river shapefile."""
+
     municipality_id = models.CharField(max_length=16)
     name = models.CharField(max_length=128)
 

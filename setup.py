@@ -19,6 +19,7 @@ install_requires = [
     'lizard-shape',
     'nens-graph',
     'pkginfo',
+    'pyshp',
     'pytz',
     'GDAL',
     ],

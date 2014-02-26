@@ -10,11 +10,21 @@ from __future__ import absolute_import
 from __future__ import division
 
 import logging
+import os
+import shutil
+import tempfile
+import zipfile
 
-from django.http import HttpResponseRedirect
+import shapefile
+
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.http import Http404
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.views.generic import TemplateView
+from django.views.generic import View
 from lizard_ui.views import ViewContextMixin
 
 from . import forms
@@ -25,6 +35,11 @@ logger = logging.getLogger(__name__)
 
 class AdminView(ViewContextMixin, TemplateView):
     template_name = "lizard_rainapp/admin.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('lizard_rainapp.change_geoobject'):
+            raise PermissionDenied()
+        return super(AdminView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request):
         self.form = forms.UploadShapefileForm()
@@ -56,9 +71,8 @@ class AdminView(ViewContextMixin, TemplateView):
         models.GeoObject.objects.filter(
             config=rainappconfig).delete()
 
-        shapefile = self.form.open_shapefile()
-
-        layer = shapefile.GetLayer()
+        shape = self.form.open_shapefile()
+        layer = shape.GetLayer()
 
         num_features = 0
 
@@ -76,3 +90,58 @@ class AdminView(ViewContextMixin, TemplateView):
             num_features += 1
 
         logger.debug("Added {} features.".format(num_features))
+
+    def rainapp_configs(self):
+        return models.RainappConfig.objects.all()
+
+
+class DownloadShapeView(View):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('lizard_rainapp.change_geoobject'):
+            raise PermissionDenied()
+        return super(AdminView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, slug):
+        try:
+            rainappconfig = models.RainappConfig.objects.get(
+                slug=slug)
+        except models.RainappConfig.DoesNotExist:
+            raise Http404()
+
+        if not rainappconfig.has_geoobjects:
+            raise Http404()
+
+        # Save a shapefile to a temp directory
+        temp_dir = tempfile.mkdtemp()
+        shapefile_path = os.path.join(temp_dir, slug)
+
+        shp = shapefile.Writer(shapefile.POLYGON)
+
+        shp.field(b'ID_NS')
+        shp.field(b'ID')
+        shp.field(b'X', b'F', 11, 5)
+        shp.field(b'Y', b'F', 11, 5)
+        shp.field(b'AREA', b'F', 11, 5)
+
+        for geo in models.GeoObject.objects.filter(config=rainappconfig):
+            shp.polygon(geo.geometry)
+            shp.record(
+                geo.municipality_id,
+                geo.name,
+                geo.x,
+                geo.y,
+                geo.area)
+
+        shp.save(shapefile_path)
+
+        response = HttpResponse()
+
+        # Python rocks -- write a zipfile directly to a Django HttpResponse
+        zipf = zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED)
+        for filename in os.listdir(temp_dir):
+            zipf.write(os.path.join(temp_dir, filename), filename)
+        zipf.close()
+
+        shutil.rmtree(temp_dir)
+
+        return response
