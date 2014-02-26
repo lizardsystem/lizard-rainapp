@@ -9,7 +9,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+import io
 import logging
+import operator
 import os
 import shutil
 import tempfile
@@ -99,7 +101,8 @@ class DownloadShapeView(View):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.has_perm('lizard_rainapp.change_geoobject'):
             raise PermissionDenied()
-        return super(AdminView, self).dispatch(request, *args, **kwargs)
+        return super(DownloadShapeView, self).dispatch(
+            request, *args, **kwargs)
 
     def get(self, request, slug):
         try:
@@ -124,7 +127,17 @@ class DownloadShapeView(View):
         shp.field(b'AREA', b'F', 11, 5)
 
         for geo in models.GeoObject.objects.filter(config=rainappconfig):
-            shp.polygon(geo.geometry)
+            if str(geo.geometry).startswith('MULTIPOLYGON'):
+                # For pyshp, multipolygons are basically normal
+                # polygons with all the parts after each other. Meaning
+                # we need to add them together them by hand.
+                geometry = [
+                    [list(l) for l in polygon] for polygon in geo.geometry]
+                geometry = reduce(operator.add, geometry, [])
+            else:
+                geometry = [list(l) for l in geo.geometry]
+
+            shp.poly(parts=geometry)
             shp.record(
                 geo.municipality_id,
                 geo.name,
@@ -134,14 +147,26 @@ class DownloadShapeView(View):
 
         shp.save(shapefile_path)
 
-        response = HttpResponse()
+        # Setup HTTPResponse for returning a zip file
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = (
+            'attachment; filename={}.zip'.format(slug))
 
-        # Python rocks -- write a zipfile directly to a Django HttpResponse
-        zipf = zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED)
+        # Create a zipfile in a BytesIO buffer
+        bytebuffer = io.BytesIO()
+        zipf = zipfile.ZipFile(bytebuffer, 'w', zipfile.ZIP_DEFLATED)
         for filename in os.listdir(temp_dir):
             zipf.write(os.path.join(temp_dir, filename), filename)
         zipf.close()
 
+        # Use the bytebuffer's position to know the length
+        response['Content-Length'] = bytebuffer.tell()
+
+        # Write contents to HTTPResponse
+        bytebuffer.seek(0)
+        response.write(bytebuffer.read())
+
+        # Remove temporary directory
         shutil.rmtree(temp_dir)
 
         return response

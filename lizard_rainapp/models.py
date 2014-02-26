@@ -23,7 +23,7 @@ class RainappConfig(models.Model):
 
     @property
     def has_geoobjects(self):
-        return GeoObject.models.objects.filter(
+        return GeoObject.objects.filter(
             config=self).exists()
 
     def shape_download_url(self):
