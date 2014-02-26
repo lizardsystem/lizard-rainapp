@@ -98,12 +98,8 @@ class RainAppAdapter(FewsJdbc):
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
 
-        # We don't want to use shapes, unless configured.
-        # In the default case, the shapes cover all of the Netherlands
-        # with one tile per municipality, and that is too slow.
-        # However, for applications such as showing individual shapes
-        # within a single municipality, it can be turned on in settings.
         if not self.rainapp_config:
+            # Fall back to FEWSJDBC.
             return super(RainAppAdapter, self).layer(*args, **kwargs)
 
         slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
