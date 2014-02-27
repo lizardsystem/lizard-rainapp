@@ -52,8 +52,10 @@ class AdminView(ViewContextMixin, TemplateView):
             request.POST, request.FILES)
 
         if self.form.is_valid():
-            self.save_shape()
-            self.form.clean_temporary_directory()
+            try:
+                self.save_shape()
+            finally:
+                self.form.clean_temporary_directory()
             return HttpResponseRedirect(
                 reverse("lizard_rainapp_admin"))
         else:
@@ -114,59 +116,63 @@ class DownloadShapeView(View):
         if not rainappconfig.has_geoobjects:
             raise Http404()
 
-        # Save a shapefile to a temp directory
-        temp_dir = tempfile.mkdtemp()
-        shapefile_path = os.path.join(temp_dir, slug)
-
-        shp = shapefile.Writer(shapefile.POLYGON)
-
-        shp.field(b'ID_NS')
-        shp.field(b'ID')
-        shp.field(b'X', b'F', 11, 5)
-        shp.field(b'Y', b'F', 11, 5)
-        shp.field(b'AREA', b'F', 11, 5)
-
-        for geo in models.GeoObject.objects.filter(config=rainappconfig):
-            if str(geo.geometry).startswith('MULTIPOLYGON'):
-                # For pyshp, multipolygons are basically normal
-                # polygons with all the parts after each other. Meaning
-                # we need to add them together them by hand.
-                geometry = [
-                    [list(l) for l in polygon] for polygon in geo.geometry]
-                geometry = reduce(operator.add, geometry, [])
-            else:
-                geometry = [list(l) for l in geo.geometry]
-
-            shp.poly(parts=geometry)
-            shp.record(
-                geo.municipality_id,
-                geo.name,
-                geo.x,
-                geo.y,
-                geo.area)
-
-        shp.save(shapefile_path)
+        bytebuffer = self.save_data_to_zip(rainappconfig)
 
         # Setup HTTPResponse for returning a zip file
         response = HttpResponse(content_type='application/zip')
         response['Content-Disposition'] = (
             'attachment; filename={}.zip'.format(slug))
 
-        # Create a zipfile in a BytesIO buffer
-        bytebuffer = io.BytesIO()
-        zipf = zipfile.ZipFile(bytebuffer, 'w', zipfile.ZIP_DEFLATED)
-        for filename in os.listdir(temp_dir):
-            zipf.write(os.path.join(temp_dir, filename), filename)
-        zipf.close()
-
-        # Use the bytebuffer's position to know the length
-        response['Content-Length'] = bytebuffer.tell()
-
-        # Write contents to HTTPResponse
-        bytebuffer.seek(0)
         response.write(bytebuffer.read())
 
-        # Remove temporary directory
-        shutil.rmtree(temp_dir)
-
         return response
+
+    def save_data_to_zip(self, rainappconfig):
+        # Save a shapefile to a temp directory
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            shapefile_path = os.path.join(
+                temp_dir, rainappconfig.slug)
+
+            shp = shapefile.Writer(shapefile.POLYGON)
+
+            shp.field(b'ID_NS')
+            shp.field(b'ID')
+            shp.field(b'X', b'F', 11, 5)
+            shp.field(b'Y', b'F', 11, 5)
+            shp.field(b'AREA', b'F', 11, 5)
+
+            for geo in models.GeoObject.objects.filter(config=rainappconfig):
+                if str(geo.geometry).startswith('MULTIPOLYGON'):
+                    # For pyshp, multipolygons are basically normal
+                    # polygons with all the parts after each other. Meaning
+                    # we need to add them together them by hand.
+                    geometry = [
+                        [list(l) for l in polygon] for polygon in geo.geometry]
+                    geometry = reduce(operator.add, geometry, [])
+                else:
+                    geometry = [list(l) for l in geo.geometry]
+
+                shp.poly(parts=geometry)
+                shp.record(
+                    geo.municipality_id,
+                    geo.name,
+                    geo.x,
+                    geo.y,
+                    geo.area)
+
+            shp.save(shapefile_path)
+
+            # Create a zipfile in a BytesIO buffer
+            bytebuffer = io.BytesIO()
+            zipf = zipfile.ZipFile(bytebuffer, 'w', zipfile.ZIP_DEFLATED)
+            for filename in os.listdir(temp_dir):
+                zipf.write(os.path.join(temp_dir, filename), filename)
+            zipf.close()
+            bytebuffer.seek(0)
+
+            return bytebuffer
+        finally:
+            # Remove temporary directory
+            shutil.rmtree(temp_dir)
