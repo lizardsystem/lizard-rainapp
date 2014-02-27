@@ -1,4 +1,6 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.txt.
+from __future__ import absolute_import
+
 from django.conf import settings
 from django.conf.urls.defaults import handler404
 from django.conf.urls.defaults import include
@@ -10,6 +12,8 @@ from django.template import Context
 from django.template import loader
 
 from lizard_fewsjdbc.views import JdbcSourceView, HomepageView
+
+from . import views
 
 handler404  # pyflakes
 
@@ -24,7 +28,13 @@ urlpatterns = patterns(
                                filter_url_name="lizard_rainapp.jdbc_source"),
         name="lizard_rainapp.jdbc_source",
         ),
+    url(r'^beheer/$', views.AdminView.as_view(),
+        name="lizard_rainapp_admin"),
+    url(r'^beheer/rainappshape/(?P<slug>[^/]+)/$',
+        views.DownloadShapeView.as_view(),
+        name="lizard_rainapp_download_shape"),
     )
+
 
 if getattr(settings, 'LIZARD_RAINAPP_STANDALONE', False):
     admin.autodiscover()

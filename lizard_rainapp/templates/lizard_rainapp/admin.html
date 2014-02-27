@@ -1,0 +1,47 @@
+{% extends "lizard_ui/realbase.html" %}
+
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet"
+       href="{{ STATIC_URL }}lizard_rainapp/admin.css"
+       type="text/css" />
+{% endblock css %}
+
+{% block awesome %}{% endblock awesome %}
+
+{% block content %}
+  <div id="maindiv">
+    <h1>Upload nieuwe deelgebieden</h1>
+
+    <p>Kies een RainAppConfig (die je eerder ingesteld hebt in
+    de <a href="/admin/lizard_rainapp/rainappconfig/">admin
+    interface</a>), stel de namen van de velden in en upload een
+    shapefile. De RainApp is direct na uploaden aangepast.</p>
+
+    <form method="post" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      <dl class="dl-horizontal">
+        {% for field in view.form %}
+          <dt>{% if field.help_text %}<div class="help_tooltip ss_sprite ss_help" title="{{ field.help_text }}">&nbsp;</div>{% endif %}{{ field.label }}</dt>
+          <dd>
+            {{ field }}
+            {% if field.errors %}
+              <span class="alert alert-danger">{% for error in field.errors %}{{ error }} {% endfor %}</span>
+            {% endif %}
+          </dd>
+        {% endfor %}
+        <dt></dt>
+        <dd><input class="btn btn-primary" type="submit" value="Versturen"/></dd>
+      </dl>
+    </form>
+
+    <h1>Download bestaande deelgebieden</h1>
+
+    <ul>
+      {% for rainapp_config in view.rainapp_configs %}
+        <li><a href="{{ rainapp_config.shape_download_url }}">{{ rainapp_config }}</a></li>
+      {% endfor %}
+    </ul>
+
+  </div>
+{% endblock %}

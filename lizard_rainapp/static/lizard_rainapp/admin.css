@@ -1,0 +1,12 @@
+#maindiv {
+    width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+}
+
+.helptext {
+    font-size: 80%;
+    font-style: italic;
+    font-weight: normal;
+}

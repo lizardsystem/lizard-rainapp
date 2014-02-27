@@ -5,7 +5,13 @@ Changelog of lizard-rainapp
 1.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Created new ``rainapp/beheer/`` page where shapefiles for regions can be
+  uploaded and downloaded. This obsoletes the old way of configuring
+  rainapp that used fixed shapefiles and .cfg files in the repository;
+  regions only live in the GeoObject model now.
+
+- Also obsoleted the ``RAINAPP_CONFIGFILE`` and ``RAINAPP_USE_SHAPES``
+  settings.
 
 
 1.12 (2013-05-17)
