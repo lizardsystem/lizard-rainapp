@@ -51,15 +51,15 @@ class AdminView(ViewContextMixin, TemplateView):
         self.form = forms.UploadShapefileForm(
             request.POST, request.FILES)
 
-        if self.form.is_valid():
-            try:
-                self.save_shape()
-            finally:
-                self.form.clean_temporary_directory()
-            return HttpResponseRedirect(
-                reverse("lizard_rainapp_admin"))
-        else:
+        if not self.form.is_valid():
             return super(AdminView, self).get(request)
+
+        try:
+            self.save_shape()
+        finally:
+            self.form.clean_temporary_directory()
+        return HttpResponseRedirect(
+            reverse("lizard_rainapp_admin"))
 
     def get_field(self, feature, fieldname, default=None):
         try:

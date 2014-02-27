@@ -1,7 +1,8 @@
 # (c) Nelen & Schuurmans.  GPL licensed, see LICENSE.rst.
 # -*- coding: utf-8 -*-
 
-"""Form voor het uploaden van nieuwe shapefiles."""
+"""Forms for RainApp. Currently only one, for uploading shapefiles to
+fill the GeoObject model."""
 
 # Python 3 is coming
 from __future__ import unicode_literals
@@ -34,36 +35,41 @@ class UploadShapefileForm(forms.Form):
 
     id_field = forms.CharField(
         label='"ID" veld',
-        help_text="Veld in de shapefile waar het FEWS ID van het "
-        "deelgebied in staat.",
+        help_text=(
+            "Veld in de shapefile waar het FEWS ID van het " +
+            "deelgebied in staat."),
         initial="ID_NS",
         required=True)
 
     name_field = forms.CharField(
         label='"NAME" veld',
-        help_text="Veld in de shapefile waar de naam van het deelgebied "
-        "(te zien in de interface) in staat.",
+        help_text=(
+            "Veld in de shapefile waar de naam van het deelgebied " +
+            "(te zien in de interface) in staat."),
         initial="ID",
         required=True)
 
     x_field = forms.CharField(
         label='"X" veld',
-        help_text="Veld in de shapefile waar de Rijksdriehoek X coördinaat "
-        "van het zwaartepunt van het deelgebied in staat.",
+        help_text=(
+            "Veld in de shapefile waar de Rijksdriehoek X coördinaat " +
+            "van het zwaartepunt van het deelgebied in staat."),
         initial="X",
         required=True)
 
     y_field = forms.CharField(
         label='"Y" veld',
-        help_text="Veld in de shapefile waar de Rijksdriehoek Y coördinaat "
-        "van het zwaartepunt van het deelgebied in staat.",
+        help_text=(
+            "Veld in de shapefile waar de Rijksdriehoek Y coördinaat " +
+            "van het zwaartepunt van het deelgebied in staat."),
         initial="Y",
         required=True)
 
     area_field = forms.CharField(
         label='"AREA" veld',
-        help_text="Veld in de shapefile waar de oppervlakte van het "
-        "deelgebied in staat.",
+        help_text=(
+            "Veld in de shapefile waar de oppervlakte van het " +
+            "deelgebied in staat."),
         initial="AREA",
         required=True)
 

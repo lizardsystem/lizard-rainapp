@@ -5,14 +5,6 @@
     margin-top: 10px;
 }
 
-.errorlist {
-    color: red;
-}
-
-dt label {
-    font-weight: bold;
-}
-
 .helptext {
     font-size: 80%;
     font-style: italic;
