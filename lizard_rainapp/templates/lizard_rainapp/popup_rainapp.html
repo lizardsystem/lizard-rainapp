@@ -7,16 +7,16 @@
 </div>
 {% for element in info %}
   {% if info|length > 1 %}
-  <hr/>
-  <h4>{{ element.location }}</h4>
+    <hr/>
+    <h4>{{ element.location }}</h4>
   {% endif %}
   {# bar graph #}
   {% if element.flot_graph_data_url or element.image_graph_url %}
-  <div style="width: 100%; height: 240px;"
-       class="dynamic-graph"
-       data-flot-graph-data-url="{{ element.flot_graph_data_url }}"
-       data-image-graph-url="{{ element.image_graph_url }}">
-  </div>
+    <div style="width: 100%; height: 240px;"
+         class="dynamic-graph"
+         data-flot-graph-data-url="{{ element.flot_graph_data_url }}"
+         data-image-graph-url="{{ element.image_graph_url }}">
+    </div>
   {% endif %}
   {# table #}
   <table class="table table-striped table-condensed">
