@@ -49,4 +49,25 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <ul class="without-bullets">
+    <li>
+      {% if add_snippet %}
+        <a href="{% url lizard_map_collage_add %}"
+           class="collage-add"
+           data-name="{{ element.name }}"
+           data-adapter-class="{{ element.workspace_item.adapter_class }}"
+           data-adapter-layer-json="{{ element.workspace_item.adapter_layer_json }}"
+           data-identifier="{{ element.identifier_json }}"
+           data-target-id="#edit-collage"
+           title="Toevoegen aan selectie">
+          <i class="icon-picture"></i>
+          Toevoegen aan dashboard
+        </a>
+      {% endif %}
+      <a href="{{ element.url }}"
+         class="ss_table_save ss_sprite noprint"
+         title="Exporteer tijdreeksen">exporteer tijdreeksen</a>
+    </li>
+  </ul>
 {% endfor %}
