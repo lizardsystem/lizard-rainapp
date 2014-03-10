@@ -13,6 +13,8 @@ Changelog of lizard-rainapp
 - Also obsoleted the ``RAINAPP_CONFIGFILE`` and ``RAINAPP_USE_SHAPES``
   settings.
 
+- Showing export and collage buttons again.
+
 
 1.12 (2013-05-17)
 -----------------
