@@ -15,6 +15,11 @@ Changelog of lizard-rainapp
 
 - Showing export and collage buttons again.
 
+- Swapped order of export/collage buttons.
+
+- Added a css class to the 'herhalingstijden' table so that it can be hidden
+  in the dashboard when so desired.
+
 
 1.12 (2013-05-17)
 -----------------
