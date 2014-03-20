@@ -52,6 +52,11 @@
 
   <ul class="without-bullets">
     <li>
+      <a href="{{ element.url }}"
+         class="ss_table_save ss_sprite noprint"
+         title="Exporteer tijdreeksen">Exporteer tijdreeksen</a>
+    </li>
+    <li>
       {% if add_snippet %}
         <a href="{% url lizard_map_collage_add %}"
            class="collage-add"
@@ -65,11 +70,6 @@
           Toevoegen aan dashboard
         </a>
       {% endif %}
-    </li>
-    <li>
-      <a href="{{ element.url }}"
-         class="ss_table_save ss_sprite noprint"
-         title="Exporteer tijdreeksen">exporteer tijdreeksen</a>
     </li>
   </ul>
 {% endfor %}
