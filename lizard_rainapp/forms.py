@@ -138,7 +138,8 @@ class UploadShapefileForm(forms.Form):
             try:
                 feature.GetField(shape_field)
             except ValueError:
-                self.add_field_error(field_name,
+                self.add_field_error(
+                    field_name,
                     "Shapefile heeft geen veld '{}'.".format(shape_field))
                 return
 

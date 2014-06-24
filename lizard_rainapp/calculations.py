@@ -167,7 +167,7 @@ def moving_sum(values, td_window, td_value, start_date_utc, end_date_utc):
         # 5 minute data, fix to whole five minutes before startdate
         window_start = start_date_utc.replace(hour=0,
                                               minute=5 * int(
-                                                start_date_utc.minute / 5),
+                                                  start_date_utc.minute / 5),
                                               second=0,
                                               microsecond=0) - td_value
     # Fast way to calculate sum values.
@@ -185,7 +185,7 @@ def moving_sum(values, td_window, td_value, start_date_utc, end_date_utc):
         # Skip values that are not in the start of the window.
         while (max_index + 1 < len_values and
                values[max_index + 1]['datetime'] - td_value <
-                             window_start):
+               window_start):
             min_index += 1
             max_index += 1
 
@@ -193,7 +193,7 @@ def moving_sum(values, td_window, td_value, start_date_utc, end_date_utc):
         # which the value applies need to be in the window.
         while (max_index + 1 < len_values and
                values[max_index + 1]['datetime'] - td_value >=
-                             window_start and
+               window_start and
                values[max_index + 1]['datetime'] <= window_end):
 
             max_index += 1
@@ -209,9 +209,9 @@ def moving_sum(values, td_window, td_value, start_date_utc, end_date_utc):
 
         if max_index >= min_index:
             max_values.append({
-                    'value': sum_values,
-                    'datetime_start_utc': window_start,
-                    'datetime_end_utc': window_end,
+                'value': sum_values,
+                'datetime_start_utc': window_start,
+                'datetime_end_utc': window_end,
             })
 
         window_start += window_increment
