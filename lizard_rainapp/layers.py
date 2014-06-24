@@ -80,20 +80,22 @@ class RainAppAdapter(FewsJdbc):
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
-        named_locations = self._locations()
         location_id = identifier['location']
 
-        location_names = [
-            location['location'] for location in named_locations
-            if location['locationid'] == location_id]
+        try:
+            return GeoObject.objects.get(municipality_id=location_id).name
+        except GeoObject.DoesNotExist:
+            pass  # In this case we will fall back to the FEWS name
 
-        if location_names:
-            return location_names[0]
-        else:
-            logger.warn("_get_location_name: Location names is empty;" +
-                        " looking for location_id=%s in named_locations %s." %
-                        (location_id, named_locations))
-            return "Unknown location"  # TODO
+        named_locations = self._locations()
+        for location in named_locations:
+            if location['locationid'] == location_id:
+                return location['location']
+
+        logger.warn("_get_location_name: Location names is empty;" +
+                    " looking for location_id=%s in named_locations %s." %
+                    (location_id, named_locations))
+        return "Unknown location"
 
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
