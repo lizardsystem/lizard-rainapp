@@ -52,12 +52,14 @@ class AdminView(ViewContextMixin, TemplateView):
             request.POST, request.FILES)
 
         if not self.form.is_valid():
+            self.form.clean_temporary_directory()
             return super(AdminView, self).get(request)
 
         try:
             self.save_shape()
         finally:
             self.form.clean_temporary_directory()
+
         return HttpResponseRedirect(
             reverse("lizard_rainapp_admin"))
 

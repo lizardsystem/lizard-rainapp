@@ -28,7 +28,7 @@ class RainappConfig(models.Model):
 
     def shape_download_url(self):
         return reverse('lizard_rainapp_download_shape', kwargs=dict(
-                slug=self.slug))
+            slug=self.slug))
 
     @classmethod
     def get_by_jdbcslug_and_filter(cls, jdbc_slug, filter_id):

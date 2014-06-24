@@ -71,8 +71,8 @@ def import_recent_data(rainapp_config, datetime_ref):
         if not timeseries:
             logger.debug(ts_kwargs)
             logger.info('No data for parameter %s at location %s.' % (
-                              ts_kwargs['parameter_id'],
-                              ts_kwargs['location_id']))
+                ts_kwargs['parameter_id'],
+                ts_kwargs['location_id']))
             pids_without_data.append(pid)
         else:
             last_value_date[pid] = timeseries[-1]['time'].replace(tzinfo=None)
@@ -101,8 +101,8 @@ def import_recent_data(rainapp_config, datetime_ref):
         logger.info('Syncing data for parameter %s.' % pid)
         for i, lid in enumerate(lids):
             ts_kwargs.update({
-                    'location_id': lid,
-                    })
+                'location_id': lid,
+            })
 
             try:
                 data = js.get_timeseries(**ts_kwargs)

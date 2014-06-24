@@ -80,20 +80,22 @@ class RainAppAdapter(FewsJdbc):
 
     def _get_location_name(self, identifier):
         """Return location_name for identifier."""
-        named_locations = self._locations()
         location_id = identifier['location']
 
-        location_names = [
-            location['location'] for location in named_locations
-            if location['locationid'] == location_id]
+        try:
+            return GeoObject.objects.get(municipality_id=location_id).name
+        except GeoObject.DoesNotExist:
+            pass  # In this case we will fall back to the FEWS name
 
-        if location_names:
-            return location_names[0]
-        else:
-            logger.warn("_get_location_name: Location names is empty;" +
-                        " looking for location_id=%s in named_locations %s." %
-                        (location_id, named_locations))
-            return "Unknown location"  # TODO
+        named_locations = self._locations()
+        for location in named_locations:
+            if location['locationid'] == location_id:
+                return location['location']
+
+        logger.warn("_get_location_name: Location names is empty;" +
+                    " looking for location_id=%s in named_locations %s." %
+                    (location_id, named_locations))
+        return "Unknown location"
 
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
@@ -106,8 +108,8 @@ class RainAppAdapter(FewsJdbc):
         rainapp_style = slc.mapnik_style()
 
         self.maxdate = (CompleteRainValue.objects.filter(
-                parameterkey=self.parameterkey, config=self.rainapp_config)
-                        .aggregate(md=Max('datetime'))['md'])
+            parameterkey=self.parameterkey, config=self.rainapp_config)
+            .aggregate(md=Max('datetime'))['md'])
 
         if self.maxdate is None:
             # Color all shapes according to value -1
@@ -246,10 +248,10 @@ class RainAppAdapter(FewsJdbc):
         today_site_tz = self.tz.localize(datetime.datetime.now())
         start_date_utc, end_date_utc = self._to_utc(start_date, end_date)
         graph = GraphClass(start_date_utc,
-                             end_date_utc,
-                             today=today_site_tz,
-                             tz=self.tz,
-                             **extra_params)
+                           end_date_utc,
+                           today=today_site_tz,
+                           tz=self.tz,
+                           **extra_params)
 
         # Gets timeseries, draws the bars, sets  the legend
         for identifier in identifiers:
@@ -258,7 +260,7 @@ class RainAppAdapter(FewsJdbc):
                                                       start_date_utc,
                                                       end_date_utc)
             dates_site_tz = [row['datetime'].astimezone(self.tz)
-                         for row in cached_value_result]
+                             for row in cached_value_result]
             values = [row['value'] for row in cached_value_result]
             units = [row['unit'] for row in cached_value_result]
             unit = ''
@@ -305,11 +307,11 @@ class RainAppAdapter(FewsJdbc):
         end_date_cache = (
             datetime.datetime(
                 end_date.year, end_date.month, end_date.day) +
-                datetime.timedelta(days=1))
+            datetime.timedelta(days=1))
 
         cache_key = hash('%s::%s::%s::%s::%s::%s' % (
-                self.jdbc_source.id, self.filterkey, self.parameterkey,
-                identifier['location'], start_date_cache, end_date_cache))
+            self.jdbc_source.id, self.filterkey, self.parameterkey,
+            identifier['location'], start_date_cache, end_date_cache))
         # Datetimes are in string and stored in datetime_str.
         values = cache.get(cache_key)
         if values is None:
