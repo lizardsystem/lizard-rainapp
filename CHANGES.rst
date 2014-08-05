@@ -15,6 +15,9 @@ Changelog of lizard-rainapp
 
 - Showing export and collage buttons again.
 
+- Fix legend and layer method in layer.py.
+- Remove ShapeLegendClass import. 
+
 
 1.12 (2013-05-17)
 -----------------

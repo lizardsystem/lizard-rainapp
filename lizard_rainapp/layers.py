@@ -19,7 +19,6 @@ from lizard_map.adapter import FlotGraph
 from lizard_map.coordinates import RD
 from lizard_map.coordinates import google_to_rd
 from lizard_map.daterange import current_start_end_dates
-from lizard_shape.models import ShapeLegendClass
 from nens_graph.rainapp import RainappGraph
 
 from lizard_rainapp.calculations import UNIT_TO_TIMEDELTA
@@ -97,84 +96,14 @@ class RainAppAdapter(FewsJdbc):
 
     def layer(self, *args, **kwargs):
         """Return mapnik layers and styles."""
-
-        if not self.rainapp_config:
-            # Fall back to FEWSJDBC.
-            return super(RainAppAdapter, self).layer(*args, **kwargs)
-
-        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
-        rainapp_style = slc.mapnik_style()
-
-        self.maxdate = (CompleteRainValue.objects.filter(
-                parameterkey=self.parameterkey, config=self.rainapp_config)
-                        .aggregate(md=Max('datetime'))['md'])
-
-        if self.maxdate is None:
-            # Color all shapes according to value -1
-            query = """(
-                select
-                    -1 as value,
-                    gob.geometry as geometry
-                from
-                    lizard_rainapp_geoobject gob
-                where
-                    gob.config_id = '%d'
-            ) as data""" % (self.rainapp_config.pk,)
-        else:
-            # For the query to behave properly, time zone information must be
-            # passed! For naive datetime, %Z will be formatted as an empty
-            # string, so that case is covered as well.
-            maxdate_str = self.maxdate.strftime('%Y-%m-%dT%H:%M:%S%Z')
-
-            query = """(
-                select
-                    rav.value as value,
-                    gob.geometry as geometry
-                from
-                    lizard_rainapp_geoobject gob
-                    join lizard_rainapp_rainvalue rav
-                    on rav.geo_object_id = gob.id
-                where
-                    rav.datetime = '%s' and
-                    rav.parameterkey = '%s' and
-                    gob.config_id = '%d'
-            ) as data""" % (maxdate_str, self.parameterkey,
-                            self.rainapp_config.pk)
-
-        query = str(query)  # Seems mapnik or postgis don't like unicode?
-
-        default_database = settings.DATABASES['default']
-        datasource = mapnik.PostGIS(
-            host=default_database['HOST'],
-            user=default_database['USER'],
-            password=default_database['PASSWORD'],
-            dbname=default_database['NAME'],
-            table=query,
-            geometry_field='geometry',
-        )
-
-        layer = mapnik.Layer("Gemeenten", RD)
-        layer.datasource = datasource
-
-        layer.styles.append('RainappStyle')
-
-        styles = {'RainappStyle': rainapp_style}
-        layers = [layer]
-
-        return layers, styles
+        # Fall back to FEWSJDBC. ShapeLegendClass not used any more.
+        return super(RainAppAdapter, self).layer(*args, **kwargs)
 
     def legend(self, updates=None):
-        slc = ShapeLegendClass.objects.get(descriptor=LEGEND_DESCRIPTOR)
-        from lizard_shape.layers import AdapterShapefile
-        la = {
-            'layer_name': 'test',
-            'resource_module': 'test',
-            'resource_name': 'test',
-            'legend_type': 'ShapeLegendClass',
-            'legend_id': slc.id,
-        }
-        asf = AdapterShapefile(self.workspace_item, layer_arguments=la)
-        return asf.legend(updates)
+        """
+        LEGEND_DESCRIPTOR of ShapeLegendClass   not used any more. 
+        """
+        return None
 
     def search(self, google_x, google_y, radius=None):
         "Search by coordinates, return matching items as list of dicts"
