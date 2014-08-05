@@ -16,7 +16,18 @@ Changelog of lizard-rainapp
 - Showing export and collage buttons again.
 
 - Fix legend and layer method in layer.py.
+
 - Remove ShapeLegendClass import. 
+
+- Swapped order of export/collage buttons.
+
+- Added a css class to the 'herhalingstijden' table so that it can be hidden
+  in the dashboard when so desired.
+
+- Graphs now also use the GeoObject's "name" field as the location's name.
+  It used to use the FEWS name, that is the fallback now in case the
+  GeoObject doesn't exist (although that should never happen). Mouseover
+  etc already used the GeoObject's name.
 
 
 1.12 (2013-05-17)
