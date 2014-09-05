@@ -52,7 +52,7 @@ def handler500(request):
     Simple test:
 
       >>> handler500({})  #doctest: +ELLIPSIS
-      <django.http.HttpResponseServerError object at ...>
+      <django.http.response.HttpResponseServerError object at ...>
 
     """
     t = loader.get_template('500.html')
