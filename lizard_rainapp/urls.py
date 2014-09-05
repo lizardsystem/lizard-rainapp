@@ -2,10 +2,10 @@
 from __future__ import absolute_import
 
 from django.conf import settings
-from django.conf.urls.defaults import handler404
-from django.conf.urls.defaults import include
-from django.conf.urls.defaults import patterns
-from django.conf.urls.defaults import url
+from django.conf.urls import handler404
+from django.conf.urls import include
+from django.conf.urls import patterns
+from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponseServerError
 from django.template import Context
