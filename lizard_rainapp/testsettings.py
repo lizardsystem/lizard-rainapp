@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'lizard_ui',
     'lizard_fewsjdbc',
     'lizard_security',
-    'staticfiles',
+    'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_nose',

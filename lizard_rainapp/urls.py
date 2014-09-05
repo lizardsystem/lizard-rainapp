@@ -42,7 +42,7 @@ if getattr(settings, 'LIZARD_RAINAPP_STANDALONE', False):
         '',
         (r'^map/', include('lizard_map.urls')),
         (r'^admin/', include(admin.site.urls)),
-        (r'', include('staticfiles.urls')),
+        (r'', include('django.contrib.staticfiles.urls')),
     )
 
 
