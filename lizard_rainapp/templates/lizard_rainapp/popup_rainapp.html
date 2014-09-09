@@ -58,7 +58,7 @@
     </li>
     <li>
       {% if add_snippet %}
-        <a href="{% url lizard_map_collage_add %}"
+        <a href="{% url "lizard_map_collage_add" %}"
            class="collage-add"
            data-name="{{ element.name }}"
            data-adapter-class="{{ element.workspace_item.adapter_class }}"

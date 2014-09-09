@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'lizard_ui',
     'lizard_fewsjdbc',
     'lizard_security',
-    'staticfiles',
+    'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_nose',
@@ -65,6 +65,8 @@ STATICFILES_FINDERS = STATICFILES_FINDERS
 SOUTH_TESTS_MIGRATE = False
 
 LIZARD_RAINAPP_STANDALONE = True
+
+SECRET_KEY = "Does not need to be secret"
 
 try:
     # Import local settings that aren't stored in svn.

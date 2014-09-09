@@ -14,14 +14,14 @@ install_requires = [
     'django-extensions',
     'django-nose',
     'lizard-fewsjdbc',
-    'lizard-map >= 4.0, < 5.0',
-    'lizard-ui >= 4.0, < 5.0',
+    'lizard-map >= 4.0',
+    'lizard-ui >= 4.0',
     'lizard-shape',
     'nens-graph',
     'pkginfo',
     'pyshp',
     'pytz',
-    'GDAL',
+#   'GDAL',  # strange Buildout problem
     ],
 
 tests_require = [
@@ -49,9 +49,9 @@ setup(name='lizard-rainapp',
       extras_require={'test': tests_require},
       entry_points={
           'console_scripts': [
-            ],
+          ],
           'lizard_map.adapter_class': [
-            'adapter_rainapp = lizard_rainapp.layers:RainAppAdapter'
-            ],
+              'adapter_rainapp = lizard_rainapp.layers:RainAppAdapter'
+          ],
           },
       )

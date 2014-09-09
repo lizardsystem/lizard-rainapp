@@ -2,10 +2,10 @@
 from __future__ import absolute_import
 
 from django.conf import settings
-from django.conf.urls.defaults import handler404
-from django.conf.urls.defaults import include
-from django.conf.urls.defaults import patterns
-from django.conf.urls.defaults import url
+from django.conf.urls import handler404
+from django.conf.urls import include
+from django.conf.urls import patterns
+from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponseServerError
 from django.template import Context
@@ -42,7 +42,7 @@ if getattr(settings, 'LIZARD_RAINAPP_STANDALONE', False):
         '',
         (r'^map/', include('lizard_map.urls')),
         (r'^admin/', include(admin.site.urls)),
-        (r'', include('staticfiles.urls')),
+        (r'', include('django.contrib.staticfiles.urls')),
     )
 
 
@@ -52,7 +52,7 @@ def handler500(request):
     Simple test:
 
       >>> handler500({})  #doctest: +ELLIPSIS
-      <django.http.HttpResponseServerError object at ...>
+      <django.http.response.HttpResponseServerError object at ...>
 
     """
     t = loader.get_template('500.html')

@@ -67,7 +67,7 @@ def rain_stats(values,
 
     tz = pytz.timezone(settings.TIME_ZONE)
 
-    td_value = UNIT_TO_TIMEDELTA[values[0]['unit']]
+    td_value = UNIT_TO_TIMEDELTA.get(values[0]['unit'], 'mm/5min')
     max_values = moving_sum(values,
                             td_window,
                             td_value,

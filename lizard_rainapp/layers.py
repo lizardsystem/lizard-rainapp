@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+
 import datetime
 import iso8601
+import json
 import locale
 import logging
-import mapnik
 import pytz
 
 from django.conf import settings
@@ -13,10 +14,8 @@ from django.core.cache import cache
 from django.db.models import Max
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.utils import simplejson as json
 from lizard_fewsjdbc.layers import FewsJdbc
 from lizard_map.adapter import FlotGraph
-from lizard_map.coordinates import RD
 from lizard_map.coordinates import google_to_rd
 from lizard_map.daterange import current_start_end_dates
 from nens_graph.rainapp import RainappGraph
@@ -104,7 +103,7 @@ class RainAppAdapter(FewsJdbc):
 
     def legend(self, updates=None):
         """
-        LEGEND_DESCRIPTOR of ShapeLegendClass   not used any more. 
+        LEGEND_DESCRIPTOR of ShapeLegendClass   not used any more.
         """
         return None
 
