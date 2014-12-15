@@ -29,6 +29,8 @@ Changelog of lizard-rainapp
   GeoObject doesn't exist (although that should never happen). Mouseover
   etc already used the GeoObject's name.
 
+- Updated to django 1.6.
+  
 
 1.12 (2013-05-17)
 -----------------
