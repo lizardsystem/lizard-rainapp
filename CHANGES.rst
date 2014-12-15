@@ -2,8 +2,8 @@ Changelog of lizard-rainapp
 ===================================================
 
 
-1.13 (unreleased)
------------------
+2.0 (2014-12-15)
+----------------
 
 - Created new ``rainapp/beheer/`` page where shapefiles for regions can be
   uploaded and downloaded. This obsoletes the old way of configuring
